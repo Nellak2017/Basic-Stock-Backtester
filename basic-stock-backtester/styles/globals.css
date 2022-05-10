@@ -2,13 +2,63 @@ html,
 body {
   padding: 0;
   margin: 0;
+  overflow-x: hidden;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  padding-top: 1rem;
+
+  overflow: hidden;
+
+  margin: 0;
+  vertical-align: baseline;
+
+  color: rgb(219,232,212);
+  background-image: linear-gradient(
+    180deg,
+  hsl(224deg 20% 23%) 2%,
+  hsl(224deg 20% 22%) 24%,
+  hsl(224deg 20% 22%) 31%,
+  hsl(224deg 20% 21%) 37%,
+  hsl(223deg 20% 21%) 41%,
+  hsl(223deg 20% 21%) 44%,
+  hsl(223deg 20% 20%) 47%,
+  hsl(223deg 20% 20%) 50%,
+  hsl(222deg 20% 20%) 52%,
+  hsl(222deg 20% 19%) 54%,
+  hsl(221deg 20% 19%) 56%,
+  hsl(221deg 20% 18%) 57%,
+  hsl(221deg 20% 18%) 59%,
+  hsl(221deg 20% 18%) 61%,
+  hsl(221deg 20% 18%) 63%,
+  hsl(221deg 20% 18%) 64%,
+  hsl(222deg 20% 18%) 66%,
+  hsl(222deg 20% 17%) 68%,
+  hsl(222deg 20% 17%) 71%,
+  hsl(222deg 20% 17%) 74%,
+  hsl(222deg 20% 17%) 78%,
+  hsl(222deg 20% 17%) 83%,
+  hsl(222deg 20% 17%) 99%
+  );
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+input {
+  width: 8rem;
 }
 
 * {
