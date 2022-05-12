@@ -1,34 +1,5 @@
-import faker from 'faker'; // todo: Import Data from API instead
+// Call the API to get the Chart data. Pass it through the data transformer and return it to the caller.
 
-export const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
-
-export const options = {
-  responsive: true,
-  plugins: {
-    legend: {
-      position: 'top',
-    },
-    title: {
-      display: true,
-      text: 'Chart.js Line Chart',
-    },
-  },
-};
-
-export const chartData = {
-  labels,
-  datasets: [
-    {
-      label: 'Dataset 1',
-      data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
-      borderColor: 'rgb(255, 99, 132)',
-      backgroundColor: 'rgba(255, 99, 132, 0.5)',
-    },
-    {
-      label: 'Dataset 2',
-      data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
-      borderColor: 'rgb(53, 162, 235)',
-      backgroundColor: 'rgba(53, 162, 235, 0.5)',
-    },
-  ],
-};
+// 1. Call the API to get the data
+// 2. Pass it through the data transformer
+// 3. Return that transformed data to the caller

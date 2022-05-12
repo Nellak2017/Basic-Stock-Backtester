@@ -1,6 +1,6 @@
 import {
     OptionsContainer
-} from './chart-options.elements'
+} from './chartOptions.elements'
 const ChartOptions = ({children}) => {
     return (
         <>
