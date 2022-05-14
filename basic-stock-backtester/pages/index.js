@@ -1,5 +1,7 @@
 // react imports
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+// API imports
+import { getChartData} from '../src/infrastructure/api/chartData.js'
 // Component imports
 import Head from 'next/head'
 import ChartOptions from '../src/presentation/components/chartOptions/chartOptions.js'
@@ -33,6 +35,26 @@ export default function Home() {
   const [Profit, setProfit] = useState(1);
   const [InMarket, setInMarket] = useState(false); // if you are invested or not
 
+  const [APIData, setAPIData] = useState(null)
+
+  useEffect(() => {
+    getChartData(
+      "ETH-USD",
+      "1D",
+      "1Y",
+      "1.10",
+      ".95",
+      "False",
+      "ConservativeMomentum",
+      "EMA-12",
+      "EMA-24", 
+      res => {
+        console.log(res)
+      }, err => {
+        alert(err)
+      })
+  }, [])
+
   const [formValues, setFormValues] = useState({
     ticker: "ETH-USD",
     interval: "1m",
@@ -54,7 +76,7 @@ export default function Home() {
 
   // Todo: Get the Chart data from the Python Flask API
   // Todo: Handle the Chart data properly and transform the data as required
-  // Todo: fix styles. Make responsive
+  // Todo: fix styles. Make responsive, Make prettier (Optional)
   return (
     <>
       <Head>
