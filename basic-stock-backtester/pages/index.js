@@ -1,12 +1,12 @@
 // react imports
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 // API imports
-import { getChartData} from '../src/infrastructure/api/chartData.js'
+import { getChartData } from '../src/infrastructure/api/chartData.js'
 // Component imports
 import Head from 'next/head'
-import ChartOptions from '../src/presentation/components/chartOptions/chartOptions.js'
-import { StockPeriodBtn } from '../src/presentation/components/chartOptions/chartOptions.elements.js'
-import FormInput from '../src/presentation/components/formInput/formInput.js'
+import ChartOptions from '../src/presentation/components/molecules/chartOptions/chartOptions.js'
+import { StockPeriodBtn } from '../src/presentation/components/molecules/chartOptions/chartOptions.elements.js'
+import FormInput from '../src/presentation/components/molecules/formInput/formInput.js'
 // Chart imports
 import { Line } from 'react-chartjs-2'
 import {
@@ -19,7 +19,12 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { formInputs, chartStockPeriods, options, chartData } from '../src/infrastructure/content/homeContent.js'
+import {
+  formInputs, chartStockPeriods, options,
+  chartData, extractData, chartLabels, 
+  range, daysInterval
+}
+  from '../src/infrastructure/content/homeContent.js'
 
 export default function Home() {
   ChartJS.register(
@@ -34,47 +39,54 @@ export default function Home() {
   const [HighlightedPeriod, setHighlightedPeriod] = useState("1D");
   const [Profit, setProfit] = useState(1);
   const [InMarket, setInMarket] = useState(false); // if you are invested or not
+  const [APIData, setAPIData] = useState(null);
 
-  const [APIData, setAPIData] = useState(null)
+  const chartDataMemo = useMemo(() => {
+     return {
+       "values": extractData(APIData, "value"),
+       "ema24": extractData(APIData, "ema24"),
+       "ema12": extractData(APIData, "ema12")
+     }
+  }, [APIData])
 
-  useEffect(() => {
-    getChartData(
-      "ETH-USD",
-      "1D",
-      "1Y",
-      "1.10",
-      ".95",
-      "False",
-      "ConservativeMomentum",
-      "EMA-12",
-      "EMA-24", 
-      res => {
-        console.log(res)
-      }, err => {
-        alert(err)
-      })
-  }, [])
-
+  // Todo: Clean this up
+  // Todo: Improve error handling
+  // Todo: Add Client Side Data Validation
+  // Todo: Fix the API sending "strategy", it should join it with "-" and server should handle it
+  // Todo: move range, daysinterval, and extract data to the data transformers
+  // Todo: Figure out why the chart isn't displaying properly
   const [formValues, setFormValues] = useState({
     ticker: "ETH-USD",
     interval: "1m",
-    upperSell: 1.1,
-    lowerSell: .95,
-    initHolding: false,
-    strategy: "Conservative Momentum",
+    upperSell: "1.1",
+    lowerSell: ".95",
+    initHolding: "false",
+    strategy: "Conservative-Momentum",
     lowerIndicator: "EMA-24",
     upperIndicator: "EMA-12"
   });
 
+  useEffect(() => {
+    console.log(APIData)
+    console.log(chartDataMemo)
+
+    console.log(chartData(Object.keys(chartDataMemo), range(0,daysInterval(formValues["interval"])), chartDataMemo))
+  }, [APIData])
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    formValues["period"] = HighlightedPeriod;
+    getChartData(formValues,
+      (res) => { setAPIData(res.data.data) },
+      (err) => { console.error(err) }
+    )
   };
 
   const onChange = (e) => {
     setFormValues({ ...formValues, [e.target.name]: e.target.value });
   };
 
-  // Todo: Get the Chart data from the Python Flask API
+  // Todo: Refactor the chartData API and the API data structure in this file to be cleaner
   // Todo: Handle the Chart data properly and transform the data as required
   // Todo: fix styles. Make responsive, Make prettier (Optional)
   return (
@@ -98,7 +110,7 @@ export default function Home() {
           <section className="chart-container">
             <Line
               options={options}
-              data={chartData}
+              data={chartData(Object.keys(chartDataMemo), range(0,365), chartDataMemo)}
             />
             <ChartOptions>
               {chartStockPeriods.map((period) => (
@@ -126,7 +138,7 @@ export default function Home() {
           <h1 id="Profit-Heading" style={{ marginTop: "2rem" }}>{`Profitability for ${HighlightedPeriod}`}</h1>
           <h2 id="Profit" style={{ marginBottom: "2rem" }}>{`${Profit.toFixed(2)} x input money`}</h2>
           <h1 id="Stock-Status-Heading">Stock Status</h1>
-          <h2 id="Stock-Status">{!InMarket ? "Out of the Market, Holding" : "In the Market, Holding"}</h2>
+          <h2 id="Stock-Status">{InMarket ? "In the Market, Holding" : "Out of the Market, Holding"}</h2>
         </section>
       </main>
     </>
