@@ -26,6 +26,7 @@ export const formInputs = [
             {option: "30m"},
             {option: "90m"},
             {option: "1h"},
+            {option: "1d"},
             {option: "5d"},
             {option: "1wk"},
             {option: "1mo"},
@@ -138,7 +139,43 @@ export const chartStockPeriods = [
     },
 ];
 
-export const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
+export const range = (start, end) => {
+    return Array(end - start + 1).fill().map((_, idx) => start + idx)
+}
+
+// Todo: make this method actually return the correct value
+export const daysInterval = (intervalStr) => {
+    if (intervalStr.toUpperCase() === "1D"){
+        return 1
+    } else if (intervalStr.toUpperCase() === "1W") {
+        return 7
+    } else if (intervalStr.toUpperCase() === "1M") {
+        return 31
+    } else if (intervalStr.toUpperCase() === "1Y") {
+        return 365
+    }else if (intervalStr.toUpperCase() === "5Y") {
+        return 5*365
+    }
+    else{
+        return 5*365
+    }
+}
+
+export const randomColor = () => {
+    return Math.floor((Math.random() * 255) + 1)
+}
+
+export const extractData = (lis, value) => {
+    if (lis !== null){
+        let dataPoints = []
+        for (let dataPoint of lis){
+          dataPoints.push(dataPoint[value]);
+        }
+        return dataPoints
+    }
+}
+
+export const chartLabels = ["value"]
 
 export const options = {
     responsive: true,
@@ -154,20 +191,33 @@ export const options = {
 };
 
 // This data will be from the API endpoint
-export const chartData = {
-    labels,
-    datasets: [
-        {
-            label: 'Dataset 1',
-            data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
-            borderColor: 'rgb(255, 99, 132)',
-            backgroundColor: 'rgba(255, 99, 132, 0.5)',
-        },
-        {
-            label: 'Dataset 2',
-            data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
-            borderColor: 'rgb(53, 162, 235)',
-            backgroundColor: 'rgba(53, 162, 235, 0.5)',
-        },
-    ],
+export const chartData = (dataSetLabels, labels, data) => {
+    return {
+        labels,
+        datasets: [
+            ...dataSetLabels.map((dataSetLabel) => (
+                {
+                    label: dataSetLabel,
+                    data: data[dataSetLabel],
+                    borderColor: `rgb(${randomColor()}, ${randomColor()}, ${randomColor()})`,
+                    backgroundColor: `rgba(${randomColor()}, ${randomColor()}, ${randomColor()}, 0.5)`,
+                }
+            ))
+        ],
+    }
 };
+/**
+        
+            {
+                label: 'Dataset 1',
+                data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            },
+            {
+                label: 'Dataset 2',
+                data: labels.map(() => faker.datatype.number({ min: -1000, max: 1000 })),
+                borderColor: 'rgb(53, 162, 235)',
+                backgroundColor: 'rgba(53, 162, 235, 0.5)',
+            },
+ */
