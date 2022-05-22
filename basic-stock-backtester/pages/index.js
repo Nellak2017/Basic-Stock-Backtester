@@ -1,13 +1,9 @@
-// react imports
 import { useState, useEffect, useMemo } from 'react'
-// API imports
 import { getChartData } from '../src/infrastructure/api/chartData.js'
-// Component imports
 import Head from 'next/head'
 import ChartOptions from '../src/presentation/components/molecules/chartOptions/chartOptions.js'
 import { StockPeriodBtn } from '../src/presentation/components/molecules/chartOptions/chartOptions.elements.js'
 import FormInput from '../src/presentation/components/molecules/formInput/formInput.js'
-// Chart imports
 import { Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -20,11 +16,44 @@ import {
   Legend,
 } from 'chart.js';
 import {
-  formInputs, chartStockPeriods, options,
-  chartData, extractData, chartLabels, 
-  range, daysInterval
-}
-  from '../src/infrastructure/content/homeContent.js'
+  formInputs,
+  chartStockPeriods,
+  options,
+  chartData,
+  extractData,
+  chartLabels,
+  range,
+  daysInterval,
+  colors,
+  defaultStockIntervals,
+  defaultAPIData,
+  DTO
+} from '../src/infrastructure/content/homeContent.js'
+import {
+  ONE_DAY,
+  ONE_WEEK,
+  ONE_MONTH,
+  THREE_MONTHS,
+  ONE_YEAR,
+  FIVE_YEARS,
+  ALL,
+  ONE_MINUTE,
+  TWO_MINUTES,
+  FIVE_MINUTES,
+  FIFTEEN_MINUTES,
+  THIRTY_MINUTES,
+  NINETY_MINUTES,
+  ONE_HOUR,
+  FIVE_DAYS,
+  DEFAULT_TICKER,
+  UPPER_SELL,
+  LOWER_SELL,
+  INIT_HOLDING,
+  STRATEGY,
+  EMA_LOWER_INDICATOR,
+  EMA_UPPER_INDICATOR
+} from '../src/infrastructure/content/constants'
+import axios from 'axios'
 
 export default function Home() {
   ChartJS.register(
@@ -36,18 +65,108 @@ export default function Home() {
     Tooltip,
     Legend
   );
-  const [HighlightedPeriod, setHighlightedPeriod] = useState("1D");
+  const [HighlightedPeriod, setHighlightedPeriod] = useState(ONE_DAY);
   const [Profit, setProfit] = useState(1);
-  const [InMarket, setInMarket] = useState(false); // if you are invested or not
-  const [APIData, setAPIData] = useState(null);
+  const [InMarket, setInMarket] = useState(INIT_HOLDING); // if you are invested or not
+  const [APIData, setAPIData] = useState(defaultAPIData);
+  const [ChartRange, setChartRange] = useState(3600);
+  const [formValues, setFormValues] = useState({
+    ticker: DEFAULT_TICKER,
+    interval: ONE_MINUTE,
+    upperSell: UPPER_SELL,
+    lowerSell: LOWER_SELL,
+    initHolding: INIT_HOLDING,
+    strategy: STRATEGY,
+    lowerIndicator: EMA_LOWER_INDICATOR,
+    upperIndicator: EMA_UPPER_INDICATOR
+  });
 
+  // Get Default values for chart on page load
+  useEffect(() => {
+    /**
+     * getDefaultChartData(all 6 periods)
+     * try { load(period)}
+     * catch { err => display(err)}
+     */
+    getChartData(DTO("1D", "1M"), (res) => { setAPIData(prev => ({ ...prev, ["1D"]: res.data })) }, (err) => { console.error(err) });
+    getChartData(DTO("1WK", "5M"), (res) => { setAPIData(prev => ({ ...prev, ["1WK"]: res.data })) }, (err) => { console.error(err) });
+    getChartData(DTO("1MO", "15M"), (res) => { setAPIData(prev => ({ ...prev, ["1MO"]: res.data })) }, (err) => { console.error(err) });
+    getChartData(DTO("3MO", "1H"), (res) => { setAPIData(prev => ({ ...prev, ["3MO"]: res.data })) }, (err) => { console.error(err) });
+    getChartData(DTO("1Y", "1D"), (res) => { setAPIData(prev => ({ ...prev, ["1Y"]: res.data })) }, (err) => { console.error(err) });
+    getChartData(DTO("5Y", "1WK"), (res) => { setAPIData(prev => ({ ...prev, ["5Y"]: res.data })) }, (err) => { console.error(err) });
+  }, [])
+
+  // When API Data is called or the Period is changed, call this
+  useEffect(() => {
+    //debugger
+    if (APIData[HighlightedPeriod] !== undefined && APIData[HighlightedPeriod].length != 0) {
+      const dataPt = APIData[HighlightedPeriod]["data"]
+      debugger
+      const len = dataPt.length
+      debugger
+      setProfit(dataPt[len - 1]["current_profitability_multiplier"])
+      setInMarket(dataPt[len - 1]["holding_stock"])
+      setChartRange(len)
+      console.log(dataPt)
+    } else {
+      getChartData(DTO(HighlightedPeriod, formValues), (res) => { setAPIData(prev => ({ ...prev, ["1D"]: res.data })) }, (err) => { console.error(err) });
+    }
+  }, [APIData, HighlightedPeriod])
+
+  const extractChartData = (Period) => {
+    //debugger
+    if (APIData[Period].length != 0) {
+      return {
+        "values": extractData(APIData[Period].data, "value"),
+        "ema24": extractData(APIData[Period].data, "ema24"),
+        "ema12": extractData(APIData[Period].data, "ema12")
+      }
+    }
+    else {
+      return {
+        "values": extractData(defaultResData, "value"),
+        "ema24": extractData(defaultResData, "ema24"),
+        "ema12": extractData(defaultResData, "ema12")
+      }
+    }
+  }
+
+  // Memoize the Default Chart Periods so that there can be a quick user Response time
   const chartDataMemo = useMemo(() => {
-     return {
-       "values": extractData(APIData, "value"),
-       "ema24": extractData(APIData, "ema24"),
-       "ema12": extractData(APIData, "ema12")
-     }
+    let memo = {}
+    for (let x of Object.keys(defaultStockIntervals)) {
+      memo[x] = extractChartData(x)
+    }
+    let v = memo[HighlightedPeriod]
+    let u = [...Object.keys({
+      "values": "black",
+      "ema24": "Red",
+      "ema12": "Green"
+    }).map((dataSetLabel) => ({
+      label: dataSetLabel,
+      data: v[dataSetLabel],
+      borderColor: colors[dataSetLabel],
+      backgroundColor: colors[dataSetLabel],
+      pointRadius: 0
+    }))]
+
+    //debugger
+    return memo
   }, [APIData])
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    formValues["period"] = HighlightedPeriod;
+    getChartData(formValues,
+      (res) => { setAPIData({ ...APIData, [HighlightedPeriod]: res.data.data }) },
+      (err) => { console.error(err); alert("Error Fetching Stock Data") }
+    )
+
+  };
+
+  const onChange = (e) => {
+    setFormValues({ ...formValues, [e.target.name]: e.target.value });
+  };
 
   // Todo: Clean this up
   // Todo: Improve error handling
@@ -55,37 +174,6 @@ export default function Home() {
   // Todo: Fix the API sending "strategy", it should join it with "-" and server should handle it
   // Todo: move range, daysinterval, and extract data to the data transformers
   // Todo: Figure out why the chart isn't displaying properly
-  const [formValues, setFormValues] = useState({
-    ticker: "ETH-USD",
-    interval: "1m",
-    upperSell: "1.1",
-    lowerSell: ".95",
-    initHolding: "false",
-    strategy: "Conservative-Momentum",
-    lowerIndicator: "EMA-24",
-    upperIndicator: "EMA-12"
-  });
-
-  useEffect(() => {
-    console.log(APIData)
-    console.log(chartDataMemo)
-
-    console.log(chartData(Object.keys(chartDataMemo), range(0,daysInterval(formValues["interval"])), chartDataMemo))
-  }, [APIData])
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    formValues["period"] = HighlightedPeriod;
-    getChartData(formValues,
-      (res) => { setAPIData(res.data.data) },
-      (err) => { console.error(err) }
-    )
-  };
-
-  const onChange = (e) => {
-    setFormValues({ ...formValues, [e.target.name]: e.target.value });
-  };
-
   // Todo: Refactor the chartData API and the API data structure in this file to be cleaner
   // Todo: Handle the Chart data properly and transform the data as required
   // Todo: fix styles. Make responsive, Make prettier (Optional)
@@ -98,6 +186,12 @@ export default function Home() {
       </Head>
 
       <main>
+        <h1>{`1D: ${APIData["1D"].length == 0 ? "none" : APIData["1D"][0]}`}</h1>
+        <h1>{`1WK: ${APIData["1WK"].length == 0 ? "none" : APIData["1WK"][0]}`}</h1>
+        <h1>{`1MO: ${APIData["1MO"].length == 0 ? "none" : APIData["1MO"][0]}`}</h1>
+        <h1>{`3MO: ${APIData["3MO"].length == 0 ? "none" : APIData["3MO"][0]}`}</h1>
+        <h1>{`1Y: ${APIData["1Y"].length == 0 ? "none" : APIData["1Y"][0]}`}</h1>
+        <h1>{`5Y: ${APIData["5Y"].length == 0 ? "none" : APIData["5Y"][0]}`}</h1>
         <section className="main-section">
           <h1 id="Site-Name">
             Basic Stock Backtester
@@ -110,7 +204,7 @@ export default function Home() {
           <section className="chart-container">
             <Line
               options={options}
-              data={chartData(Object.keys(chartDataMemo), range(0,365), chartDataMemo)}
+              data={chartData(Object.keys(colors), range(0, ChartRange), chartDataMemo[HighlightedPeriod], colors)}
             />
             <ChartOptions>
               {chartStockPeriods.map((period) => (
@@ -144,19 +238,3 @@ export default function Home() {
     </>
   )
 }
-/* 
-Components:
-
-  Main flex
-  Input flex
-  H1
-  H2-Stats
-  H2-Chart
-  Chart
-  Chart-Options
-
-Possible Components:
-  chart
-  stats
-
-*/
