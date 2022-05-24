@@ -1,9 +1,9 @@
 // This file contains any constants that will be on the front end
 
 export const ONE_DAY = "1D"
-export const ONE_WEEK = "1W"
-export const ONE_MONTH = "1M"
-export const THREE_MONTHS = "3M"
+export const ONE_WEEK = "1WK"
+export const ONE_MONTH = "1MO"
+export const THREE_MONTHS = "3MO"
 export const ONE_YEAR = "1Y"
 export const FIVE_YEARS = "5Y"
 export const ALL = "ALL"
@@ -25,4 +25,4 @@ export const STRATEGY = "Conservative-Momentum"
 export const EMA_LOWER_INDICATOR = "EMA-24"
 export const EMA_UPPER_INDICATOR = "EMA-12"
 
-export const DEFAULT_RETRIES = 5
+export const DEFAULT_RETRIES = 10
