@@ -49,6 +49,10 @@ export const range = (start, end) => {
     }
 }
 
+export const areSetsEqual = (a, b) => {
+    return a.size === b.size && [...a].every(value => b.has(value));
+}
+
 // Todo: make this method actually return the correct value
 export const daysInterval = (intervalStr) => {
     if (intervalStr.toUpperCase() === "1D") {
@@ -85,15 +89,9 @@ export const extractData = (lis, value) => {
 }
 
 // Todo: Make this as intended
-export const DTO = (period, interval) => {
+export const DTO = (period, interval, formValues) => {
     return {
-        ticker: DEFAULT_TICKER,
-        upperSell: UPPER_SELL,
-        lowerSell: LOWER_SELL,
-        initHolding: "false",
-        strategy: "Conservative-Momentum",
-        lowerIndicator: "EMA-24",
-        upperIndicator: "EMA-12",
+        ...formValues,
         period: period,
         interval: interval
     }
@@ -114,7 +112,7 @@ export const defaultLoad = () => {
 
 export const chartData = (dataSetLabels, labels, data, colors) => {
     return {
-        labels,
+        labels: labels,
         datasets: [
             ...dataSetLabels.map((dataSetLabel) => (
                 {
