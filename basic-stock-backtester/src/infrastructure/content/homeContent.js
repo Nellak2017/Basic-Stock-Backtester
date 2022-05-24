@@ -166,23 +166,23 @@ export const chartStockPeriods = [
 export const chartLabels = ["value"]
 
 export const defaultStockIntervals = {
-    ONE_DAY: ONE_MINUTE,
-    ONE_WEEK: FIVE_MINUTES,
-    ONE_MONTH: FIFTEEN_MINUTES,
-    THREE_MONTHS: ONE_HOUR,
-    ONE_YEAR: ONE_DAY,
-    FIVE_YEARS: ONE_WEEK,
-    ALL: ONE_MONTH
+    [ONE_DAY]: ONE_MINUTE,
+    [ONE_WEEK]: FIVE_MINUTES,
+    [ONE_MONTH]: FIFTEEN_MINUTES,
+    [THREE_MONTHS]: ONE_HOUR,
+    [ONE_YEAR]: ONE_DAY,
+    [FIVE_YEARS]: ONE_WEEK,
+    [ALL]: ONE_MONTH
 }
 
 export const defaultAPIData = {
-    ONE_DAY: [],
-    ONE_WEEK: [],
-    ONE_MONTH: [],
-    THREE_MONTHS: [],
-    ONE_YEAR: [],
-    FIVE_YEARS: [],
-    ALL: []
+    [ONE_DAY]: [],
+    [ONE_WEEK]: [],
+    [ONE_MONTH]: [],
+    [THREE_MONTHS]: [],
+    [ONE_YEAR]: [],
+    [FIVE_YEARS]: [],
+    [ALL]: []
 }
 
 export const defaultStock = {
