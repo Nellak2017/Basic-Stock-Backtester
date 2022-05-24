@@ -1,5 +1,6 @@
 import {
     range,
+    areSetsEqual,
     daysInterval,
     randomColor,
     extractData,
@@ -37,12 +38,15 @@ import {
 
 import {
     defaultStockIntervals,
-    defaultStock
+    defaultStock,
+    defaultResData
 } from '../content/homeContent'
 
 import { getChartData } from '../api/chartData'
-
 import axios from 'axios';
+import ReactDom from 'react-dom';
+import { render } from '@testing-library/react';
+
 
 jest.mock('axios');
 
@@ -52,6 +56,7 @@ jest.mock('axios');
  * TODO: LEARN HOW TO TEST IF API RETRIES OR NOT
  * TODO: LEARN HOW TO TEST USESTATE/USEMEMO HOOK (LIKE IF IT IS BEING UPDATED WITH PROPER VALUES)
  * TODO: EXTRACT OUT THE API TEST TO THE API FOLDER!! NOT THIS FOLDER
+ * TODO: Figure out how to test axios-retry
  */
 
 
@@ -244,11 +249,7 @@ describe('getDefaultChartData should try to get all the stock period chart data 
     // getDefaultChartData behavior tests
     describe("getDefaultChartData behaves as expected on Mock Data", () => {
 
-
-        // TODO: THIS TEST IS NOT CORRECT. RE-WRITE THIS TO BE COMPATIBLE WITH .THEN SYNTAX
-
-        it("should get the expected API data on Sucessful API Response", async () => {
-            // given
+        it("should get the expected API data on Sucessful API Response", (done) => {
             // See also: https://vhudyma-blog.eu/3-ways-to-mock-axios-in-jest/
             const TSLA_Mock_Stock = {
                 "ticker": "TSLA",
@@ -263,60 +264,82 @@ describe('getDefaultChartData should try to get all the stock period chart data 
             }
             axios.get.mockResolvedValueOnce(TSLA_dummy_API_Response);
 
-            // when 
-            getChartData(TSLA_Mock_Stock, (res) => {expect(res).toEqual(1)}, (err) => { expect(err).not.toEqual(TSLA_Mock_Stock) });
+            // Expect Server Response to have Correct Object Format 
+            getChartData(TSLA_Mock_Stock, (res) => {
+                try {
+                    // Expect the keys in the response array to be what I expect and nothing more or less
+                    const resKeysSet = new Set(Object.keys(res[0]));
+                    const groundTruthSet = new Set(['ticker', 'date', 'value', 'ema24', 
+                    'ema12', 'holding_stock', 'current_profitability_multiplier', 'position_evaluation', 
+                    'position_two_step_evaluation'])
+                    const resKeysAreCorrect = areSetsEqual(resKeysSet, groundTruthSet)
+                    expect(resKeysAreCorrect).toBeTruthy();
 
-            // then 
+                    // Expect the values to be in the correct format
+                    // See also: https://regex-generator.olafneumann.org/
+                    const matchFloat = /[0-9]*\.[0-9]+/i;
+                    const matchString = /[a-zA-Z]+/i;
+                    const matchDateTime = /\d\d[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\s[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?/i;
+                    const matchBool = /^(True|False)$/i;
+                    const matchEvaluation = /^(Buy|Sell|Hold)$/i;
+                    const matchTwoEvaluation = /^(BUY and HOLD|SELL and HOLD|HOLD and HOLD|SELL and BUY|HOLD and SELL|BUY and SELL)$/i;
+                    
+                    const tickerValid = !!matchString.exec(res[0]["ticker"]) // true if match, false if not
+                    const dateValid = !!matchDateTime.exec(res[0]["date"])
+                    const valueValid = !!matchFloat.exec(res[0]["value"])
+                    const lowerIndicatorValid = !!matchFloat.exec(res[0]["ema24"])
+                    const upperIndicatorValid = !!matchFloat.exec(res[0]["ema12"])
+                    const hodlValid = !!matchBool.exec(res[0]["holding_stock"])
+                    const profitValid = !!matchFloat.exec(res[0]["current_profitability_multiplier"])
+                    const validPosition = !!matchEvaluation.exec(res[0]["position_evaluation"])
+                    const validTwoPosition = !!matchTwoEvaluation.exec(res[0]["position_two_step_evaluation"])
+
+                    expect(tickerValid).toBeTruthy();
+                    expect(dateValid).toBeTruthy();
+                    expect(valueValid).toBeTruthy();
+                    expect(lowerIndicatorValid).toBeTruthy();
+                    expect(upperIndicatorValid).toBeTruthy();
+                    expect(hodlValid).toBeTruthy();
+                    expect(profitValid).toBeTruthy();
+                    expect(validPosition).toBeTruthy();
+                    expect(validTwoPosition).toBeTruthy();
+
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            }, (err) => {
+                done(err);
+                return;
+            })
+
+            // Expect Server to have been called with this string
             expect(axios.get).toHaveBeenCalledWith(`http://localhost:5000/${STRATEGY}?ticker=${"TSLA"}&interval=${ONE_DAY}&period=${ONE_WEEK.toLowerCase()}&upperSell=${UPPER_SELL}&lowerSell=${LOWER_SELL}&initHolding=${INIT_HOLDING}&lowerIndicator=${EMA_LOWER_INDICATOR}&upperIndicator=${EMA_UPPER_INDICATOR}`
                 , {
                     headers: {
                         'content-type': 'application/json',
                         'Access-Control-Allow-Origin': '*',
                         'Access-Control-Allow-Credentials': true
-                    }, timeout: 8000
+                    }, timeout: 4000
                 });
         })
 
-        // TODO: THIS TEST IS NOT CORRECT. RE-WRITE THIS TO BE COMPATIBLE WITH .THEN SYNTAX
-
-        it("should not get the expected API data on Failed API Response", async () => {
-            // given
-            // See also: https://vhudyma-blog.eu/3-ways-to-mock-axios-in-jest/
-            const TSLA_Mock_Stock = {
-                "ticker": "TSLA",
-                "interval": ONE_DAY,
-                "upperSell": UPPER_SELL,
-                "lowerSell": LOWER_SELL,
-                "initHolding": INIT_HOLDING,
-                "strategy": STRATEGY,
-                "lowerIndicator": EMA_LOWER_INDICATOR,
-                "upperIndicator": EMA_UPPER_INDICATOR,
-                "period": ONE_WEEK,
-            }
-            const message = "Network Error";
-            axios.get.mockRejectedValueOnce(new Error(message));
-
-            // when 
-            getChartData(TSLA_Mock_Stock, (res) => {expect(res).toEqual([])}, (err) => { expect(err).not.toEqual(TSLA_Mock_Stock) });
-
-            // then 
-            expect(axios.get).toHaveBeenCalledWith(`http://localhost:5000/${STRATEGY}?ticker=${"TSLA"}&interval=${ONE_DAY}&period=${ONE_WEEK.toLowerCase()}&upperSell=${UPPER_SELL}&lowerSell=${LOWER_SELL}&initHolding=${INIT_HOLDING}&lowerIndicator=${EMA_LOWER_INDICATOR}&upperIndicator=${EMA_UPPER_INDICATOR}`
-                , {
-                    headers: {
-                        'content-type': 'application/json',
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Credentials': true
-                    }, timeout: 8000
-                });
-        })
+        // Todo: Figure out how to test axios-retry
         it("should retry getting visiblePeriod's API data up to retries times, but short circuit if sucessful", async () => {
-            
-        })
-        it("should not retry getting non-visible periods's API data", () => { })
-        it("should setChartDataMemo to the correct values on Sucessful API response", () => {
 
         })
+
+        // Todo: Figure out how to test axios-retry
+        it("should not retry getting non-visible periods's API data", () => { })
+        
+
+        describe("should setChartDataMemo to the correct values on Sucessful API response", () => {
+            it("should set memo to be individual value for visible period, and default for rest", () => {})
+            it("should set memo to be individual value for visible period, and to nothing when no other defaults are passed in", () => {})
+        })
+        
         it("should not setChartDataMemo on Failed API response", () => { })
+        
         it("should throw an error on Failed API response and display error to console", () => { })
     })
 })
