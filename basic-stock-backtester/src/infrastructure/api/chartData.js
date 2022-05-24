@@ -21,7 +21,7 @@ export const getChartData = async (data, res, err) => {
             'content-type': 'application/json',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Credentials': true
-        }, timeout: 8000
+        }, timeout: 4000
     })
         .then(response => {
             if (res != null) {
