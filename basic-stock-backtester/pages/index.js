@@ -1,5 +1,5 @@
 import { useState, useLayoutEffect, useEffect, useMemo, useRef } from 'react'
-import { getChartData } from '../src/infrastructure/api/chartData.js'
+import { getChartData, getChartDataAsync } from '../src/infrastructure/api/chartData.js'
 import Head from 'next/head'
 import ChartOptions from '../src/presentation/components/molecules/chartOptions/chartOptions.js'
 import { StockPeriodBtn } from '../src/presentation/components/molecules/chartOptions/chartOptions.elements.js'
@@ -85,32 +85,75 @@ export default function Home() {
     upperIndicator: EMA_UPPER_INDICATOR
   });
 
+  const [oneDayTest, setOneDayTest] = useState([]);
+  const [oneWeekTest, setOneWeekTest] = useState([]);
+
+  /*
+  useEffect(() => {
+    debugger;
+    console.log("API Data Changed");
+    console.log(APIData);
+  }, [APIData])
+  */
+  useEffect(() => {
+    debugger;
+    console.log("API Data Changed")
+    console.log(oneDayTest)
+    console.log(oneWeekTest)
+  }, [oneDayTest, oneWeekTest])
+
   // Get Default values for chart on page load
+
+  // BUG: It appears 1D is recieving the wrong data, sometimes. Unknown if API issue or client side issue.
+  // BUG: It appears that on a properly formatted api request, sometimes the data returned is for another period.
+  // BUG: It appears that sometimes it gets the right data and then it gets changed to the wrong data.
+
   useLayoutEffect(() => {
     // Get HighlightedPeriod values
-    formValues["period"] = HighlightedPeriod;
+
+    const formCopy = JSON.parse(JSON.stringify(formValues))
+    formCopy["period"] = HighlightedPeriod;
+    console.log(formCopy);
+    //console.log(APIData[HighlightedPeriod].length === 0);
+
     getChartData(
-      formValues,
+      formCopy,
       (res) => {
         const dataPt = res.data.data
         const len = dataPt.length
-        console.log({ ...APIData, [HighlightedPeriod]: res.data });
-        console.log(APIData[HighlightedPeriod].length);
+        //console.log({ ...APIData, [HighlightedPeriod]: res.data });
+        //console.log(APIData[HighlightedPeriod].length);
         setChartRange(prev => len !== undefined ? len : prev);
         setProfit(prev => len !== undefined ? dataPt[len - 1]["current_profitability_multiplier"] : prev);
         setInMarket(prev => len !== undefined ? dataPt[len - 1]["holding_stock"] : prev);
-        debugger;
-        setAPIData(APIData[HighlightedPeriod].length === 0 ? ({ ...APIData, [HighlightedPeriod]: res.data }) : ({ ...APIData, [HighlightedPeriod]: [] }) ) 
-        debugger;
+        //setAPIData(APIData[ONE_WEEK].length === 0 ? ({ ...APIData, [HighlightedPeriod]: res.data }) : [])
+        setOneDayTest(oneDayTest.length === 0 ? (res.data) : []);
       },
       (err) => { console.error(err) }
     );
+
+
+    const formCopy2 = JSON.parse(JSON.stringify(formValues))
+    formCopy2["period"] = ONE_WEEK;
+    formCopy2["interval"] = FIVE_MINUTES;
+    console.log(formCopy2);
+    //console.log(APIData[ONE_WEEK].length === 0);
+
+    getChartData(
+      formCopy2,
+      (res) => {
+        //setAPIData( APIData[ONE_WEEK].length === 0 ? ({...APIData, [ONE_WEEK]: res.data}) : [])
+        setOneWeekTest(oneWeekTest.length === 0 ? (res.data) : []);
+      },
+      (err) => { console.error(err) }
+    );
+
+    /*
 
     // Get Default for rest
     for (let period of Object.keys(defaultStockIntervals)) {
       const testVariablePeriod = period;
       if (testVariablePeriod !== HighlightedPeriod) {
-        console.log(`period in loop is: ${testVariablePeriod}`)
         
         getChartData(
           {
@@ -125,15 +168,16 @@ export default function Home() {
             upperIndicator: EMA_UPPER_INDICATOR
           },
           (res) => { 
-            console.log({ ...APIData, [testVariablePeriod]: res.data });
+            //console.log({ ...APIData, [testVariablePeriod]: res.data });
             debugger;
-            setAPIData(APIData[testVariablePeriod].length === 0 ? ({ ...APIData, [testVariablePeriod]: res.data }) : ({ ...APIData, [testVariablePeriod]: [] }))
-            debugger;
+            setAPIData(({ ...APIData, [testVariablePeriod]: res.data }))
           },
           (err) => { console.error(err) }
         )
       }
     }
+
+    */
 
   }, [])
 
@@ -155,24 +199,15 @@ export default function Home() {
   }
 
   const chartDataMemo = useMemo(() => {
-    let memo = {
-      [ONE_DAY]: [],
-      [ONE_WEEK]: [],
-      [ONE_MONTH]: [],
-      [THREE_MONTHS]: [],
-      [ONE_YEAR]: [],
-      [FIVE_YEARS]: [],
-      [ALL]: []
-    }
-
+    let memo = JSON.parse(JSON.stringify(defaultAPIData)); // Note: Be sure to do a deep object copy, so that you don't accidentally modify memo!!
     for (let x of Object.keys(defaultStockIntervals)) {
       memo[x] = extractChartData(x)
     }
-
     return memo
   }, [APIData])
 
   // OnPeriod Change, after first mount
+  /*
   const periodListJustMounted = useRef(true)
   useEffect(() => {
     
@@ -180,15 +215,18 @@ export default function Home() {
       if (APIData[HighlightedPeriod] !== undefined && Object.keys(APIData[HighlightedPeriod]).length > 0) {
         const dataPt = APIData[HighlightedPeriod]["data"]
         const len = dataPt.length
+
+        debugger;
+        console.log(`The dataPt in Highlighted Period useEffect ${dataPt}`)
+        debugger;
+
         setProfit(dataPt[len - 1]["current_profitability_multiplier"])
         setInMarket(dataPt[len - 1]["holding_stock"])
         setChartRange(len)
       } else {
         getChartData(DTO(HighlightedPeriod, defaultStockIntervals[HighlightedPeriod], formValues), 
         (res) => {
-          debugger;
           setAPIData(APIData[HighlightedPeriod].length === 0 ? ({ ...APIData, [HighlightedPeriod]: res.data }) : ({ ...APIData, [HighlightedPeriod]: [] }))
-          debugger;
         },
           (err) => { console.error(err); alert("Error Fetching Stock Data") }
         );
@@ -197,22 +235,26 @@ export default function Home() {
     periodListJustMounted.current = false;
   }, [HighlightedPeriod])
 
+  */
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(chartDataMemo);
-    console.log(APIData);
+    console.log(oneDayTest);
+    console.log(oneWeekTest);
+    //console.log(APIData);
     console.log(ChartRange);
 
+    /*
     formValues["period"] = HighlightedPeriod;
     getChartData(formValues,
       (res) => { setAPIData({ ...APIData, [HighlightedPeriod]: res.data.data }) },
       (err) => { console.error(err); alert("Error Fetching Stock Data") }
     )
-    
+      */
   };
 
   const onChange = (e) => {
-    debugger;
     setFormValues({ ...formValues, [e.target.name]: e.target.value });
   };
 
@@ -234,7 +276,6 @@ export default function Home() {
       </Head>
 
       <main>
-
         <section className="main-section">
           <h1 id="Site-Name">
             Basic Stock Backtester
@@ -281,74 +322,3 @@ export default function Home() {
     </>
   )
 }
-/** 
- <h1>{`1D: ${APIData[ONE_DAY]?.length == 0 ? "none" : APIData[ONE_DAY][0]}`}</h1>
-        <h1>{`1WK: ${APIData[ONE_WEEK]?.length == 0 ? "none" : APIData[ONE_WEEK][0]}`}</h1>
-        <h1>{`1MO: ${APIData[ONE_MONTH]?.length == 0 ? "none" : APIData[ONE_MONTH][0]}`}</h1>
-        <h1>{`3MO: ${APIData[THREE_MONTHS]?.length == 0 ? "none" : APIData[THREE_MONTHS][0]}`}</h1>
-        <h1>{`1Y: ${APIData[ONE_YEAR]?.length == 0 ? "none" : APIData[ONE_YEAR][0]}`}</h1>
-        <h1>{`5Y: ${APIData[FIVE_YEARS]?.length == 0 ? "none" : APIData[FIVE_YEARS][0]}`}</h1>
-*/
-
-/*
-  // When API Data is called or the Period is changed, call this
-  useEffect(() => {
-    //debugger
-    if (APIData[HighlightedPeriod] !== undefined && APIData[HighlightedPeriod].length != 0) {
-      const dataPt = APIData[HighlightedPeriod]["data"]
-      debugger
-      const len = dataPt.length
-      debugger
-      setProfit(dataPt[len - 1]["current_profitability_multiplier"])
-      setInMarket(dataPt[len - 1]["holding_stock"])
-      setChartRange(len)
-      console.log(dataPt)
-    } else {
-      getChartData(DTO(HighlightedPeriod, formValues), (res) => { setAPIData(prev => ({ ...prev, ["1D"]: res.data })) }, (err) => { console.error(err) });
-    }
-  }, [APIData, HighlightedPeriod])
-
-  const extractChartData = (Period) => {
-    if (APIData[Period].length != 0) {
-      return {
-        "values": extractData(APIData[Period].data, "value"),
-        "ema24": extractData(APIData[Period].data, "ema24"),
-        "ema12": extractData(APIData[Period].data, "ema12")
-      }
-    }
-    else {
-      return {
-        "values": extractData(defaultResData, "value"),
-        "ema24": extractData(defaultResData, "ema24"),
-        "ema12": extractData(defaultResData, "ema12")
-      }
-    }
-  }
-  */
-/*
- // Memoize the Default Chart Periods so that there can be a quick user Response time
- const chartDataMemo = useMemo(() => {
-   let memo = {}
-   return memo
-   /*
-   for (let x of Object.keys(defaultStockIntervals)) {
-     memo[x] = extractChartData(x)
-   }
-   let v = memo[HighlightedPeriod]
-   let u = [...Object.keys({
-     "values": "black",
-     "ema24": "Red",
-     "ema12": "Green"
-   }).map((dataSetLabel) => ({
-     label: dataSetLabel,
-     data: v[dataSetLabel],
-     borderColor: colors[dataSetLabel],
-     backgroundColor: colors[dataSetLabel],
-     pointRadius: 0
-   }))]
-  
-   //debugger
-
- }, [APIData])
-
- */

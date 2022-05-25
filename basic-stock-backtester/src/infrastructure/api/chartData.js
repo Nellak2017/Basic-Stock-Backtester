@@ -11,7 +11,7 @@ import { DEFAULT_RETRIES } from '../content/constants';
 // Todo: Improve error handling
 // Todo: remove unused .then
 
-export const getChartData = async (data, res, err) => {
+export const getChartData =  (data, res, err) => {
     const { ticker, interval, period, upperSell, lowerSell, initHolding,
         strategy, lowerIndicator, upperIndicator } = data;
     axiosRetry(axios, { retries: DEFAULT_RETRIES, retryDelay: axiosRetry.exponentialDelay })
@@ -33,8 +33,10 @@ export const getChartData = async (data, res, err) => {
                 err(error)
             }
         })
+        /*
         .then(function () {
             console.log(`Input data --> ticker: ${ticker}, interval: ${interval}, period: ${period}, upperSell: ${upperSell}, lowerSell: ${lowerSell}, 
             initHolding: ${initHolding}, lowerIndicator: ${lowerIndicator}, upperIndicator: ${upperIndicator}`)
         });
+        */
 }

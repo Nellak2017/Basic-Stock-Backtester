@@ -157,11 +157,14 @@ export const chartStockPeriods = [
         id: 6,
         value: FIVE_YEARS
     },
+];
+/**
+ * 
     {
         id: 7,
         value: ALL
     },
-];
+ */
 
 export const chartLabels = ["value"]
 
@@ -172,8 +175,8 @@ export const defaultStockIntervals = {
     [THREE_MONTHS]: ONE_HOUR,
     [ONE_YEAR]: ONE_DAY,
     [FIVE_YEARS]: ONE_WEEK,
-    [ALL]: ONE_MONTH
 }
+// [ALL]: ONE_MONTH
 
 export const defaultAPIData = {
     [ONE_DAY]: [],
@@ -182,8 +185,8 @@ export const defaultAPIData = {
     [THREE_MONTHS]: [],
     [ONE_YEAR]: [],
     [FIVE_YEARS]: [],
-    [ALL]: []
 }
+//[ALL]: []
 
 export const defaultStock = {
     "ticker": DEFAULT_TICKER,
