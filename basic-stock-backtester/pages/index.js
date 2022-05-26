@@ -87,6 +87,8 @@ export default function Home() {
     upperIndicator: EMA_UPPER_INDICATOR
   });
 
+  const [test, setTest] = useState(null);
+
   // Get Default values for chart on page load
   useLayoutEffect(() => {
     // 1. Get Data from Rapid API
@@ -98,17 +100,17 @@ export default function Home() {
       res => {setAPIData(({...APIData, [ONE_DAY]: res}))},
       err => {console.error(err)});
     */
-   async function test() {
-     try{
-       getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 24).then(res => console.log(res));
-     } catch (err) {
-       console.log(err)
-     }
-   }
-   test()
-      
-
-
+    const callback = async () => {
+      try {
+        const value = await getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 24);
+        //console.log(value);
+        setTest(value);
+      } catch (e) {
+        console.error(e);
+      }
+    }  
+    
+    callback()
   }, [])
 
   const chartDataMemo = useMemo(() => {
@@ -126,6 +128,7 @@ export default function Home() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log(test)
     console.log(APIData)
   };
 

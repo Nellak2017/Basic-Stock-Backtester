@@ -3,15 +3,17 @@ import axiosRetry from 'axios-retry';
 import { DEFAULT_RETRIES } from '../content/constants';
 
 // Call the API to get the Chart data. Pass it through the data transformer and return it to the caller.
-export const getChartData = (data, res, err) => {
+export const getChartData = async (data) => {
     const { ticker, interval, period } = data;
 
     const periodOne = data["period1"];
     const periodTwo = data["period2"];
 
+    if (typeof ticker !== "string") { throw new Error("Ticker must be a string")}
+
     axiosRetry(axios, { retries: DEFAULT_RETRIES, retryDelay: axiosRetry.exponentialDelay })
     const URL = `https://yh-finance.p.rapidapi.com/stock/v3/get-chart`;
-    const request = axios.get(URL, {
+    const request = await axios.get(URL, {
         params: {
             interval: interval,
             symbol: ticker,
@@ -29,6 +31,7 @@ export const getChartData = (data, res, err) => {
             'X-RapidAPI-Key': '4a765f28f0msh2483c1d87434773p1bd624jsn49890b158cb9'
         }, timeout: 4000
     })
+        /*
         .then(response => {
             if (res != null) {
                 res(response)
@@ -39,6 +42,7 @@ export const getChartData = (data, res, err) => {
                 err(error)
             }
         })
+        
         .then(() => {
             console.log(
 `                 interval: ${interval}
@@ -48,4 +52,6 @@ export const getChartData = (data, res, err) => {
                  period2: ${periodTwo}
                  typeOf: ${ request}`);
         })
+        */
+       return request;
 }
