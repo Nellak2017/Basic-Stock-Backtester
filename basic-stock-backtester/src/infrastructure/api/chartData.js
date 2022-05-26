@@ -1,26 +1,32 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import { DEFAULT_RETRIES } from '../content/constants';
+
 // Call the API to get the Chart data. Pass it through the data transformer and return it to the caller.
+export const getChartData = (data, res, err) => {
+    const { ticker, interval, period } = data;
 
-// 1. Call the API to get the data
-// 2. Pass it through the data transformer
-// 3. Return that transformed data to the caller
+    const periodOne = data["period1"];
+    const periodTwo = data["period2"];
 
-// Todo: Clean this up, by simplifying the props passed
-// Todo: Improve error handling
-// Todo: remove unused .then
-
-export const getChartData =  (data, res, err) => {
-    const { ticker, interval, period, upperSell, lowerSell, initHolding,
-        strategy, lowerIndicator, upperIndicator } = data;
     axiosRetry(axios, { retries: DEFAULT_RETRIES, retryDelay: axiosRetry.exponentialDelay })
-    const URL = `http://localhost:5000/${strategy}?ticker=${ticker}&interval=${interval}&period=${period.toLowerCase()}&upperSell=${upperSell}&lowerSell=${lowerSell}&initHolding=${initHolding}&lowerIndicator=${lowerIndicator}&upperIndicator=${upperIndicator}`
-    axios.get(URL, {
+    const URL = `https://yh-finance.p.rapidapi.com/stock/v3/get-chart`;
+    const request = axios.get(URL, {
+        params: {
+            interval: interval,
+            symbol: ticker,
+            range: period,
+            period1: periodOne,
+            period2: periodTwo,
+            region: 'US',
+            includePrePost: 'false',
+            useYfid: 'true',
+            includeAdjustedClose: 'true',
+            events: 'capitalGain,div,split'
+        },
         headers: {
-            'content-type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Credentials': true
+            'X-RapidAPI-Host': 'yh-finance.p.rapidapi.com',
+            'X-RapidAPI-Key': '4a765f28f0msh2483c1d87434773p1bd624jsn49890b158cb9'
         }, timeout: 4000
     })
         .then(response => {
@@ -33,10 +39,13 @@ export const getChartData =  (data, res, err) => {
                 err(error)
             }
         })
-        /*
-        .then(function () {
-            console.log(`Input data --> ticker: ${ticker}, interval: ${interval}, period: ${period}, upperSell: ${upperSell}, lowerSell: ${lowerSell}, 
-            initHolding: ${initHolding}, lowerIndicator: ${lowerIndicator}, upperIndicator: ${upperIndicator}`)
-        });
-        */
+        .then(() => {
+            console.log(
+`                 interval: ${interval}
+                 symbol: ${ticker}
+                 range: ${period}
+                 period1: ${periodOne}
+                 period2: ${periodTwo}
+                 typeOf: ${ request}`);
+        })
 }

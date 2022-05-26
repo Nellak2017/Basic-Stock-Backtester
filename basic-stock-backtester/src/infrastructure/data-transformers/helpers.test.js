@@ -247,6 +247,7 @@ describe('getDefaultChartData should try to get all the stock period chart data 
     })
 
     // getDefaultChartData behavior tests
+    /*
     describe("getDefaultChartData behaves as expected on Mock Data", () => {
 
         it("should get the expected API data on Sucessful API Response", (done) => {
@@ -342,4 +343,5 @@ describe('getDefaultChartData should try to get all the stock period chart data 
         
         it("should throw an error on Failed API response and display error to console", () => { })
     })
+    */
 })
