@@ -1,10 +1,9 @@
 // Step 1 in mocking, import the modules you need
 import axios from 'axios';
 import {
-    getSmaDataPoint,
-    conservativeMomentumStrategy
-} from '../data-transformers/backtester.js';
-import { areSetsEqual } from '../data-transformers/helpers.js';
+    conservativeMomentumStrategyEvaluationFunction,
+    conservativeMomentumBacktesterFunction
+} from '../backtester-algos/backtester';
 
 // Step 2 in mocking, mock the module.
 jest.mock('axios'); // Replaces all modules inside to do nothing and return undefined
@@ -28,99 +27,8 @@ axios.get.mockResolvedValue({
     }
 });
 
-describe("getSmaDataPoint should behave correctly", () => {
 
-    describe("The function should validate it's parameters", () => {
-        // See also: https://github.com/facebook/jest/blob/main/examples/async/__tests__/user.test.js
-        // See also: https://jestjs.io/docs/tutorial-async#rejects
-
-        const badTicker = () => getSmaDataPoint(1, "2022:05:04 00:00:00", 24);
-        const badDate = () => getSmaDataPoint("TSLA", "2022:05:04 ", 12);
-        const badDays = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", "12");
-
-        it("should throw an error if ticker is not a string", async () => {
-            expect.assertions(1);
-            return badTicker().catch(e =>
-                expect(e instanceof Error).toBeTruthy()
-            );
-        })
-
-        it("should throw an error if date is not a string in the format expected", async () => {
-            expect.assertions(1);
-            return badDate().catch(e =>
-                expect(e instanceof Error).toBeTruthy()
-            );
-        })
-
-        it("should throw an error if days is not an integer", async () => {
-            expect.assertions(1);
-            return badDays().catch(e =>
-                expect(e instanceof Error).toBeTruthy()
-            );
-        })
-    })
-
-    describe("The function should return an object with a specific format", () => {
-        // See also: https://github.com/facebook/jest/blob/main/examples/async/__tests__/user.test.js
-        const goodKeys = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 24);
-        const expectedKeys = new Set(["ticker", "date", "sma"]);
-
-        it("should have only the keys expected", async () => {
-            expect.assertions(1);
-            const data = await goodKeys();
-            expect(areSetsEqual(new Set(Object.keys(data)), expectedKeys)).toBeTruthy();
-        })
-
-        describe("should have values that are the right type and format", () => {
-            it("should have valid ticker", async () => {
-                expect.assertions(1);
-                const data = await goodKeys();
-                const ticker = data["ticker"];
-                expect(typeof ticker === 'string' || ticker instanceof String && ticker.length <= 4 && ticker.length > 0).toBeTruthy();
-            })
-
-            it("should have valid date", async () => {
-                expect.assertions(2);
-                const data = await goodKeys();
-                const date = data["date"];
-                expect(typeof date === 'string' || date instanceof String).toBeTruthy();
-                expect(date).toMatch(/[0-9]+:(0?[1-9]|[1][0-2]):(0?[1-9]|[12][0-9]|3[01])\s[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?/);
-            })
-
-            it("should have valid sma", async () => {
-                expect.assertions(1);
-                const data = await goodKeys();
-                const sma = data["sma"];
-                expect(typeof sma === 'number' && !isNaN(sma)).toBeTruthy();
-            })
-        })
-    })
-
-    describe("The function should return the average for the stock given the interval and date", () => {
-
-        const sma24 = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 24);
-        const sma12 = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 12);
-
-        const sma24AvgValue = 777.555;
-        const sma12AvgValue = 795.397;
-
-        it("should have correct SMA 24 for mocked API response", async () => {
-            expect.assertions(1);
-            const data = await sma24();
-            const sma = data["sma"];
-            expect(sma).toBeCloseTo(sma24AvgValue);
-        })
-        it("should have correct SMA 12 for mocked API response", async () => {
-            expect.assertions(1);
-            const data = await sma12();
-            const sma = data["sma"];
-            expect(sma).toBeCloseTo(sma12AvgValue);
-        })
-    })
-
-})
-
-describe("conservativeMomentumStrategy should behave correctly", () => {
+describe("conservativeMomentumStrategyEvaluationFunction should behave correctly", () => {
     const dataPoint = {
         "value_1": 630,
         "value_2": 632,
@@ -143,11 +51,11 @@ describe("conservativeMomentumStrategy should behave correctly", () => {
     };
     const upperSell = 1.1;
     const lowerSell = .95;
-    const goodStrategy = () => conservativeMomentumStrategy(dataPoint, upperSell, lowerSell);
-    const badDataPoint = () => conservativeMomentumStrategy([], upperSell, lowerSell);
-    const invalidDataPoint = () => conservativeMomentumStrategy(badBuyDataPoint, upperSell, lowerSell);
-    const badUpperSell = () => conservativeMomentumStrategy(dataPoint, "123", lowerSell);
-    const badLowerSell = () => conservativeMomentumStrategy(dataPoint, upperSell, "123");
+    const goodStrategy = () => conservativeMomentumStrategyEvaluationFunction(dataPoint, upperSell, lowerSell);
+    const badDataPoint = () => conservativeMomentumStrategyEvaluationFunction([], upperSell, lowerSell);
+    const invalidDataPoint = () => conservativeMomentumStrategyEvaluationFunction(badBuyDataPoint, upperSell, lowerSell);
+    const badUpperSell = () => conservativeMomentumStrategyEvaluationFunction(dataPoint, "123", lowerSell);
+    const badLowerSell = () => conservativeMomentumStrategyEvaluationFunction(dataPoint, upperSell, "123");
 
     describe("The function should validate it's parameters", () => {
 
@@ -192,7 +100,7 @@ describe("conservativeMomentumStrategy should behave correctly", () => {
                 "stock_holding": false,
                 "buy_point": 575
             };
-            expect(conservativeMomentumStrategy(notHoldingEmaIncreasingNotDoublePos, upperSell, lowerSell)).toMatch(/BUY/);
+            expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaIncreasingNotDoublePos, upperSell, lowerSell)).toMatch(/BUY/);
         })
 
         it("should return BUY when not holding and ema is double positive ", () => {
@@ -206,7 +114,7 @@ describe("conservativeMomentumStrategy should behave correctly", () => {
                 "stock_holding": false,
                 "buy_point": 575
             };
-            expect(conservativeMomentumStrategy(notHoldingEmaIncreasingDoublePos, upperSell, lowerSell)).toMatch(/BUY/);
+            expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaIncreasingDoublePos, upperSell, lowerSell)).toMatch(/BUY/);
         })
 
         it("should return SELL when holding and v2 >= top", () => {
@@ -221,7 +129,7 @@ describe("conservativeMomentumStrategy should behave correctly", () => {
                 "stock_holding": true,
                 "buy_point": 575
             };
-            expect(conservativeMomentumStrategy(HoldingAndV2MoreThanTop, upperSell, lowerSell)).toMatch(/SELL/);
+            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndV2MoreThanTop, upperSell, lowerSell)).toMatch(/SELL/);
         })
 
         it("should return SELL when holding and v2 <= bottom", () => {
@@ -236,7 +144,7 @@ describe("conservativeMomentumStrategy should behave correctly", () => {
                 "stock_holding": true,
                 "buy_point": 575
             };
-            expect(conservativeMomentumStrategy(HoldingAndV2LessThanBottom, upperSell, lowerSell)).toMatch(/SELL/);
+            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndV2LessThanBottom, upperSell, lowerSell)).toMatch(/SELL/);
         })
 
         it("should return SELL when holding and ema_decreasing ", () => {
@@ -252,7 +160,7 @@ describe("conservativeMomentumStrategy should behave correctly", () => {
                 "stock_holding": true,
                 "buy_point": 575
             };
-            expect(conservativeMomentumStrategy(HoldingAndV2EmaDecreasing, upperSell, lowerSell)).toMatch(/SELL/);
+            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndV2EmaDecreasing, upperSell, lowerSell)).toMatch(/SELL/);
         })
 
         it("should return SELL when holding ema_double_negative", () => {
@@ -274,7 +182,7 @@ describe("conservativeMomentumStrategy should behave correctly", () => {
                 "stock_holding": true,
                 "buy_point": 575
             };
-            expect(conservativeMomentumStrategy(HoldingAndEmaDoubleNegative, upperSell, lowerSell)).toMatch(/SELL/);
+            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndEmaDoubleNegative, upperSell, lowerSell)).toMatch(/SELL/);
         })
 
         describe("should hold when not BUY or SELL", () => {
@@ -289,7 +197,7 @@ describe("conservativeMomentumStrategy should behave correctly", () => {
                     "stock_holding": false,
                     "buy_point": 575
                 };
-                expect(conservativeMomentumStrategy(notHoldingEmaDoubleNegative, upperSell, lowerSell)).toMatch(/HOLD/);
+                expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaDoubleNegative, upperSell, lowerSell)).toMatch(/HOLD/);
             })
 
             it("should hold when holding stock and ema is decreasing", () => {
@@ -311,7 +219,7 @@ describe("conservativeMomentumStrategy should behave correctly", () => {
                     "stock_holding": false,
                     "buy_point": 575
                 };
-                expect(conservativeMomentumStrategy(notHoldingEmaDecreasing, upperSell, lowerSell)).toMatch(/HOLD/);
+                expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaDecreasing, upperSell, lowerSell)).toMatch(/HOLD/);
             })
 
             it("should hold when holding stock and ema is increasing", () => {
@@ -325,8 +233,59 @@ describe("conservativeMomentumStrategy should behave correctly", () => {
                     "stock_holding": true,
                     "buy_point": 575
                 };
-                expect(conservativeMomentumStrategy(holdingEmaIncreasingNotDoublePos, upperSell, lowerSell)).toMatch(/HOLD/);
+                expect(conservativeMomentumStrategyEvaluationFunction(holdingEmaIncreasingNotDoublePos, upperSell, lowerSell)).toMatch(/HOLD/);
             })
         })
     });
+})
+
+describe("conservativeMomentumBacktesterFunction should behave correctly", () => {
+    describe("The function should validate it's parameters", () => {
+        const dataSet = [
+            { 'ticker': 'TSLA', 'date': '2022:05:20 00:00:00', 'value': 713.989990234375 },
+            { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': 655.02001953125 },
+            { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': 653.530029296875 },
+            { 'ticker': 'TSLA', 'date': '2022:05:25 00:00:00', 'value': 623.8499755859375 }
+        ];
+        const initSMA24 = 2685.78;
+        const initSMA12 = 3029.18;
+        const initiallyHolding = false;
+        const upperSell = 1.1;
+        const lowerSell = .95;
+
+        const goodBacktest = () => conservativeMomentumBacktesterFunction(dataSet, initSMA24, initSMA12, initiallyHolding,
+            upperSell, lowerSell);
+        const badDatasetBacktest = () => conservativeMomentumBacktesterFunction({}, initSMA24, initSMA12, initiallyHolding,
+            upperSell, lowerSell);
+        const badSMABacktest = () => conservativeMomentumBacktesterFunction(dataSet, "initSMA24", initSMA12, initiallyHolding,
+            upperSell, lowerSell);
+        const badHoldingBacktest = () => conservativeMomentumBacktesterFunction(dataSet, initSMA24, initSMA12, "initiallyHolding",
+            upperSell, lowerSell);
+        const badSellBacktest = () => conservativeMomentumBacktesterFunction(dataSet, initSMA24, initSMA12, initiallyHolding,
+            "upperSell", lowerSell);
+
+        it("should not throw an error if the function arguments are correct", () => {
+            expect(goodBacktest).not.toThrow(Error);
+        })
+        it("should throw an error if dataSet is bad", () => {
+            expect(badDatasetBacktest).toThrow(Error);
+        })
+        it("should throw an error if initSMA is bad", () => {
+            expect(badSMABacktest).toThrow(Error);
+         })
+        it("should throw an error if initiallyHolding is bad", () => {
+            expect(badHoldingBacktest).toThrow(Error);
+         })
+        it("should throw an error if Sell is bad", () => { 
+            expect(badSellBacktest).toThrow(Error);
+        })
+    })
+
+    describe("The function should return a list of dictionaries that have the right values", () => {
+
+    })
+
+    describe("The function should return the right backtest for a stock", () => {
+
+    })
 })

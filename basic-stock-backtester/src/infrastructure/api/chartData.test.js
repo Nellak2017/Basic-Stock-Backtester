@@ -1,6 +1,6 @@
 // Step 1 in mocking, import the modules you need
 import axios from 'axios';
-import { getSmaDataPoint } from '../data-transformers/backtester.js';
+import { getSmaDataPoint } from '../backtester-algos/backtester';
 import { getChartData } from './chartData';
 import moment from 'moment';
 

@@ -59,7 +59,7 @@ import {
 
 import {
   getSmaDataPoint
-} from '../src/infrastructure/data-transformers/backtester';
+} from '../src/infrastructure/backtester-algos/backtester';
 
 export default function Home() {
   ChartJS.register(
