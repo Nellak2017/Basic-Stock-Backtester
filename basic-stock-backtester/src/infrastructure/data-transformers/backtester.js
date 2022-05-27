@@ -1,5 +1,6 @@
 // This file contains the code needed to backtest stocks
 import { getChartData } from '../api/chartData';
+import { areSetsEqual } from '../data-transformers/helpers';
 import moment from 'moment';
 
 export const getSmaDataPoint = async (ticker, date, days) => {
@@ -25,4 +26,66 @@ export const getSmaDataPoint = async (ticker, date, days) => {
         const sma = data.slice(data.length - days, data.length).reduce((acc, cur) => acc + cur) / days;
         return { "ticker": ticker, "date": date, "sma": sma };
     } catch (err) { err }
+}
+
+export const conservativeMomentumStrategy = (dataPoint, upperSell, lowerSell) => {
+    const validKeys = ["value_1", "value_2", "ema24_1", "ema24_2", "ema12_1", "ema12_2", "stock_holding", "buy_point"];
+    const allValues = Object.values(dataPoint);
+    const allNumericValues = allValues.filter((value) => {return typeof value === "number"});
+    const allBoolValues = allValues.filter((value) => {return typeof value === "boolean"});
+    if (!areSetsEqual(new Set(Object.keys(dataPoint)) , new Set(validKeys))){
+        throw new Error("Invalid keys entered for conservativeMomentumStrategy");
+    }
+    if ((allNumericValues.length !== allValues.length - 1) || (allBoolValues.length !== 1) || typeof dataPoint["stock_holding"] !== "boolean"){
+        throw new Error("Invalid value types provided for conservativeMomentumStrategy");
+    }
+    if (typeof upperSell !== "number" || isNaN(upperSell)) {
+        throw new Error("upperSell variable is not a valid number for conservativeMomentumStrategy");
+    }
+    if (typeof lowerSell !== "number" || isNaN(lowerSell)) {
+        throw new Error("lowerSell variable is not a valid number for conservativeMomentumStrategy");
+    }
+    const BUY = "BUY";
+    const SELL = "SELL";
+    const HOLD = "HOLD";
+
+    const holding = dataPoint["stock_holding"];
+    const v2 = dataPoint["value_2"];
+    const top = dataPoint["buy_point"] * upperSell;
+    const bottom = dataPoint["buy_point"] * lowerSell;
+    const ema1 = dataPoint["ema12_1"] - dataPoint["ema24_1"];
+    const ema2 = dataPoint["ema12_2"] - dataPoint["ema24_2"];
+    const emaIncreasing = ema1 < 0 && 0 < ema2;
+    const emaDecreasing = ema1 > 0 && 0 > ema2;
+    const emaDoublePositive = ema1 > 0 && ema2 > 0 && !emaDecreasing && !emaIncreasing;
+    const emaDoubleNegative = ema1 < 0 && ema2 < 0 && !emaDecreasing && !emaIncreasing;
+    
+    if (!holding){
+        if (emaDoublePositive){
+            return BUY;
+        } else if (emaDecreasing) {
+            return HOLD;
+        } else if (emaIncreasing) {
+            return BUY;
+        } else if (emaDoubleNegative) {
+            return HOLD;
+        } else {
+            return HOLD;
+        }
+    } else if (holding){
+        if (v2 >= top || v2 <= bottom) {
+            return SELL;
+        } else if (emaDecreasing) {
+            return SELL;
+        } else if (emaIncreasing) {
+            return HOLD;
+        } else if (emaDoubleNegative){
+            return SELL;
+        } else {
+            return HOLD;
+        }
+    }
+    else {
+        return HOLD;
+    }
 }

@@ -87,30 +87,17 @@ export default function Home() {
     upperIndicator: EMA_UPPER_INDICATOR
   });
 
-  const [test, setTest] = useState(null);
-
   // Get Default values for chart on page load
   useLayoutEffect(() => {
-    // 1. Get Data from Rapid API
-
-    // Get Data for period = 1D, interval = 1m , stock = default Stock; from rapid API
-    /* 
-    const oneDayForm = {ticker: formValues["ticker"], interval: formValues["interval"], period: formValues["period"]}
-    getChartData(oneDayForm, 
-      res => {setAPIData(({...APIData, [ONE_DAY]: res}))},
-      err => {console.error(err)});
-    */
-    const callback = async () => {
-      try {
-        const value = await getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 24);
-        //console.log(value);
-        setTest(value);
-      } catch (e) {
-        console.error(e);
-      }
-    }  
-    
-    callback()
+    const getPeriod = async (ticker, period, interval) => {
+      const form = { ticker, interval, period };
+      const response = await getChartData(form);
+      const data = response.data.chart.result[0].indicators.adjclose[0].adjclose;
+      setAPIData({ ...APIData, [period]: data })
+    }
+    for (let period of Object.keys(defaultStockIntervals)){
+      getPeriod(formValues["ticker"], period, defaultStockIntervals[period]);
+    }
   }, [])
 
   const chartDataMemo = useMemo(() => {
@@ -128,7 +115,6 @@ export default function Home() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(test)
     console.log(APIData)
   };
 

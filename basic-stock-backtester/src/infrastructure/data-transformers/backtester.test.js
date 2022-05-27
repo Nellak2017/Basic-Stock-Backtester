@@ -1,6 +1,9 @@
 // Step 1 in mocking, import the modules you need
 import axios from 'axios';
-import { getSmaDataPoint } from '../data-transformers/backtester.js';
+import {
+    getSmaDataPoint,
+    conservativeMomentumStrategy
+} from '../data-transformers/backtester.js';
 import { areSetsEqual } from '../data-transformers/helpers.js';
 
 // Step 2 in mocking, mock the module.
@@ -65,7 +68,7 @@ describe("getSmaDataPoint should behave correctly", () => {
         it("should have only the keys expected", async () => {
             expect.assertions(1);
             const data = await goodKeys();
-            expect(areSetsEqual(new Set(Object.keys(data)),expectedKeys)).toBeTruthy();
+            expect(areSetsEqual(new Set(Object.keys(data)), expectedKeys)).toBeTruthy();
         })
 
         describe("should have values that are the right type and format", () => {
@@ -115,4 +118,215 @@ describe("getSmaDataPoint should behave correctly", () => {
         })
     })
 
+})
+
+describe("conservativeMomentumStrategy should behave correctly", () => {
+    const dataPoint = {
+        "value_1": 630,
+        "value_2": 632,
+        "ema24_1": 600,
+        "ema24_2": 605,
+        "ema12_1": 650,
+        "ema12_2": 625,
+        "stock_holding": true,
+        "buy_point": 575
+    };
+    const badBuyDataPoint = {
+        "value_1": 630,
+        "value_2": 632,
+        "ema24_1": 600,
+        "ema24_2": 605,
+        "ema12_1": 650,
+        "ema12_2": 625,
+        "stock_holding": true,
+        "buy_point": "575"
+    };
+    const upperSell = 1.1;
+    const lowerSell = .95;
+    const goodStrategy = () => conservativeMomentumStrategy(dataPoint, upperSell, lowerSell);
+    const badDataPoint = () => conservativeMomentumStrategy([], upperSell, lowerSell);
+    const invalidDataPoint = () => conservativeMomentumStrategy(badBuyDataPoint, upperSell, lowerSell);
+    const badUpperSell = () => conservativeMomentumStrategy(dataPoint, "123", lowerSell);
+    const badLowerSell = () => conservativeMomentumStrategy(dataPoint, upperSell, "123");
+
+    describe("The function should validate it's parameters", () => {
+
+        it("should throw an error if dataPoint has invalid keys", () => {
+            expect(badDataPoint).toThrow(Error);
+        })
+
+        it("should throw an error if the values of dataPoint are not numbers, execept for stock_holding", () => {
+            expect(invalidDataPoint).toThrow(Error);
+        })
+
+        it("should throw an error if given a bad upperSell", () => {
+            expect(badUpperSell).toThrow(Error);
+        })
+
+        it("should throw an error if given a bad lowerSell", () => {
+            expect(badLowerSell).toThrow(Error);
+        })
+
+        it("should not throw an error if given a valid input", () => {
+            expect(goodStrategy).not.toThrow(Error);
+        })
+
+    });
+
+    describe("The function should return an evaulation string that is one of only a few enum values", () => {
+        it("should have a return value in the set {'BUY','SELL','HOLD'}", () => {
+            expect(goodStrategy()).toMatch(/BUY|SELL|HOLD/)
+        })
+    });
+
+    describe("The function should return the correct evaluation for the stock", () => {
+
+        it("should return BUY when not holding and ema is increasing ", () => {
+            const notHoldingEmaIncreasingNotDoublePos = {
+                "value_1": 630,
+                "value_2": 632,
+                "ema24_1": 630,
+                "ema24_2": 605,
+                "ema12_1": 625,
+                "ema12_2": 650,
+                "stock_holding": false,
+                "buy_point": 575
+            };
+            expect(conservativeMomentumStrategy(notHoldingEmaIncreasingNotDoublePos, upperSell, lowerSell)).toMatch(/BUY/);
+        })
+
+        it("should return BUY when not holding and ema is double positive ", () => {
+            const notHoldingEmaIncreasingDoublePos = {
+                "value_1": 630,
+                "value_2": 632,
+                "ema24_1": 600,
+                "ema24_2": 605,
+                "ema12_1": 650,
+                "ema12_2": 625,
+                "stock_holding": false,
+                "buy_point": 575
+            };
+            expect(conservativeMomentumStrategy(notHoldingEmaIncreasingDoublePos, upperSell, lowerSell)).toMatch(/BUY/);
+        })
+
+        it("should return SELL when holding and v2 >= top", () => {
+            // value 2 > upperSell * buy_point === 633 > 632.5
+            const HoldingAndV2MoreThanTop = {
+                "value_1": 630,
+                "value_2": 633,
+                "ema24_1": 630,
+                "ema24_2": 605,
+                "ema12_1": 625,
+                "ema12_2": 650,
+                "stock_holding": true,
+                "buy_point": 575
+            };
+            expect(conservativeMomentumStrategy(HoldingAndV2MoreThanTop, upperSell, lowerSell)).toMatch(/SELL/);
+        })
+
+        it("should return SELL when holding and v2 <= bottom", () => {
+            // value 2 < lowerSell * buy_point ===  545 < 546.25
+            const HoldingAndV2LessThanBottom = {
+                "value_1": 630,
+                "value_2": 545,
+                "ema24_1": 630,
+                "ema24_2": 605,
+                "ema12_1": 625,
+                "ema12_2": 650,
+                "stock_holding": true,
+                "buy_point": 575
+            };
+            expect(conservativeMomentumStrategy(HoldingAndV2LessThanBottom, upperSell, lowerSell)).toMatch(/SELL/);
+        })
+
+        it("should return SELL when holding and ema_decreasing ", () => {
+            // dataPoint["ema12_1"] - dataPoint["ema24_1"] > 0 && 0 > dataPoint["ema12_2"] - dataPoint["ema24_2"]
+            // 630 - 625 > 0 && 0 > 605 - 650 === true
+            const HoldingAndV2EmaDecreasing = {
+                "value_1": 630,
+                "value_2": 633,
+                "ema24_1": 625,
+                "ema24_2": 650,
+                "ema12_1": 630,
+                "ema12_2": 605,
+                "stock_holding": true,
+                "buy_point": 575
+            };
+            expect(conservativeMomentumStrategy(HoldingAndV2EmaDecreasing, upperSell, lowerSell)).toMatch(/SELL/);
+        })
+
+        it("should return SELL when holding ema_double_negative", () => {
+            // ema1 = dataPoint["ema12_1"] - dataPoint["ema24_1"] 
+            // ema2 = dataPoint["ema12_2"] - dataPoint["ema24_2"]
+            // ema1 < 0 && ema2 < 0 && !(ema1 > 0 && 0 > ema2) && !(ema1 < 0 && 0 < ema2)
+            // --------
+            // ema1 = 625 - 630 === -5
+            // ema2 = 605 - 650 === -45
+            // -5 < 0 && -45 < 0 && !(-5 > 0 && 0 > -45) && !(-5 < 0 && 0 < -45) === true
+
+            const HoldingAndEmaDoubleNegative = {
+                "value_1": 630,
+                "value_2": 633,
+                "ema24_1": 630,
+                "ema24_2": 650,
+                "ema12_1": 625,
+                "ema12_2": 605,
+                "stock_holding": true,
+                "buy_point": 575
+            };
+            expect(conservativeMomentumStrategy(HoldingAndEmaDoubleNegative, upperSell, lowerSell)).toMatch(/SELL/);
+        })
+
+        describe("should hold when not BUY or SELL", () => {
+            it("should hold when holding stock and ema is double negative", () => {
+                const notHoldingEmaDoubleNegative = {
+                    "value_1": 630,
+                    "value_2": 633,
+                    "ema24_1": 630,
+                    "ema24_2": 650,
+                    "ema12_1": 625,
+                    "ema12_2": 605,
+                    "stock_holding": false,
+                    "buy_point": 575
+                };
+                expect(conservativeMomentumStrategy(notHoldingEmaDoubleNegative, upperSell, lowerSell)).toMatch(/HOLD/);
+            })
+
+            it("should hold when holding stock and ema is decreasing", () => {
+                // ema1 > 0 && 0 > ema2
+                // ema1 = dataPoint["ema12_1"] - dataPoint["ema24_1"] 
+                // ema2 = dataPoint["ema12_2"] - dataPoint["ema24_2"]
+                // ---------------------
+                // ema1 = 630 - 625 = 5
+                // ema2 = 605 - 650 = -45
+                // 5 > 0 && 0 > -45 === true
+
+                const notHoldingEmaDecreasing = {
+                    "value_1": 630,
+                    "value_2": 633,
+                    "ema24_1": 625,
+                    "ema24_2": 650,
+                    "ema12_1": 630,
+                    "ema12_2": 605,
+                    "stock_holding": false,
+                    "buy_point": 575
+                };
+                expect(conservativeMomentumStrategy(notHoldingEmaDecreasing, upperSell, lowerSell)).toMatch(/HOLD/);
+            })
+
+            it("should hold when holding stock and ema is increasing", () => {
+                const holdingEmaIncreasingNotDoublePos = {
+                    "value_1": 630,
+                    "value_2": 632,
+                    "ema24_1": 630,
+                    "ema24_2": 605,
+                    "ema12_1": 625,
+                    "ema12_2": 650,
+                    "stock_holding": true,
+                    "buy_point": 575
+                };
+                expect(conservativeMomentumStrategy(holdingEmaIncreasingNotDoublePos, upperSell, lowerSell)).toMatch(/HOLD/);
+            })
+        })
+    });
 })
