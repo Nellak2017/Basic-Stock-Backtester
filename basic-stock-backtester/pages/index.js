@@ -89,15 +89,20 @@ export default function Home() {
 
   // Get Default values for chart on page load
   useLayoutEffect(() => {
+    console.log(process.env.NEXT_PUBLIC_RAPIDAPI_KEY);
     const getPeriod = async (ticker, period, interval) => {
       const form = { ticker, interval, period };
       const response = await getChartData(form);
       const data = response.data.chart.result[0].indicators.adjclose[0].adjclose;
       setAPIData({ ...APIData, [period]: data })
+      console.log(APIData)
     }
+    /*
     for (let period of Object.keys(defaultStockIntervals)){
       getPeriod(formValues["ticker"], period, defaultStockIntervals[period]);
     }
+    */
+   getPeriod(formValues["ticker"], ONE_DAY, defaultStockIntervals[ONE_DAY])
   }, [])
 
   const chartDataMemo = useMemo(() => {

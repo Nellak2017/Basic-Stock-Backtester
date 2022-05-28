@@ -28,7 +28,7 @@ export const getChartData = async (data) => {
         },
         headers: {
             'X-RapidAPI-Host': 'yh-finance.p.rapidapi.com',
-            'X-RapidAPI-Key': '4a765f28f0msh2483c1d87434773p1bd624jsn49890b158cb9'
+            'X-RapidAPI-Key': process.env.NEXT_PUBLIC_RAPIDAPI_KEY
         }, timeout: 4000
     })
         /*

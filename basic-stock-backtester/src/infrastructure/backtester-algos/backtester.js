@@ -80,5 +80,6 @@ export const conservativeMomentumBacktesterFunction = (dataSet, initSMA24, initS
         if (typeof upperSell !== "number" || typeof lowerSell !== "number" || isNaN(upperSell) || isNaN(lowerSell)) {
             throw new Error("upper/lower sell entered to backtester is bad")
         }
+        
         return {};
 }

@@ -27,6 +27,11 @@ axios.get.mockResolvedValue({
 });
 
 describe("getChartData should get the chart data", () => {
+    /*
+    it("should load environment variables ", () => {
+        expect(process.env.NEXT_PUBLIC_RAPIDAPI_KEY).not.toBe(undefined);
+    })
+    */
     it("should return the data from the api as intended", async () => {
         expect.assertions(1);
         const date = "2022:05:04 00:00:00";
