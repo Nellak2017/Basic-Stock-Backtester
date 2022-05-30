@@ -475,4 +475,29 @@ describe("conservativeMomentumBacktesterFunction should behave correctly", () =>
             expect(backtested2).not.toEqual(badOutput1);
         })
     })
+
+    describe("The function should be performant", () => {
+        it("should not take more than 100ms to complete", () => {
+            // other input variables
+            const initSMA24 = 2685.78;
+            const initSMA12 = 3029.18;
+            const initHolding = false;
+            const upperSell = 1.1;
+            const lowerSell = .95;
+
+            // input
+            const goodInput1 = [
+                { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': 655.02001953125 },
+                { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': 653.530029296875 },
+                { 'ticker': 'TSLA', 'date': '2022:05:25 00:00:00', 'value': 623.8499755859375 },
+                { 'ticker': 'TSLA', 'date': '2022:05:26 00:00:00', 'value': 661.4199829101562 },
+                { 'ticker': 'TSLA', 'date': '2022:05:27 00:00:00', 'value': 723.25 }
+            ] // (TSLA, 1D, 1wk) (as of May 29 2022)
+
+            const t0 = performance.now()
+            conservativeMomentumBacktesterFunction(goodInput1, initSMA24, initSMA12, initHolding, upperSell, lowerSell)
+            const t1 = performance.now()
+            expect(t1 - t0).toBeLessThan(100)
+        })
+    })
 })
