@@ -1,34 +1,11 @@
-// Step 1 in mocking, import the modules you need
-import axios from 'axios';
 import {
     conservativeMomentumStrategyEvaluationFunction,
+    ema,
     conservativeMomentumBacktesterFunction
 } from '../backtester-algos/backtester';
 
-// Step 2 in mocking, mock the module.
-jest.mock('axios'); // Replaces all modules inside to do nothing and return undefined
-
-// Step 3 in mocking, mock the return value of the mocked function. If "mockResolvedValue", it lets you use it multiple times.
-axios.get.mockResolvedValue({
-    "data": {
-        "chart": {
-            "result": [
-                {
-                    "indicators": {
-                        "adjclose": [
-                            {
-                                "adjclose": [619.1300048828125, 630.8499755859375, 625.219970703125, 623.9000244140625, 605.1199951171875, 572.8400268554688, 599.0499877929688, 605.1300048828125, 603.5900268554688, 598.780029296875, 610.1199951171875, 609.8900146484375, 617.6900024414062, 599.3599853515625, 604.8699951171875, 616.5999755859375, 623.3099975585938, 620.8300170898438, 623.7100219726562, 656.5700073242188, 679.8200073242188, 671.8699951171875, 688.719970703125, 680.760009765625, 679.7000122070312, 677.9199829101562, 678.9000244140625, 659.5800170898438, 644.6500244140625, 652.8099975585938, 656.9500122070312, 685.7000122070312, 668.5399780273438, 653.3800048828125, 650.5999755859375, 644.219970703125, 646.219970703125, 660.5, 655.2899780273438, 649.260009765625, 643.3800048828125, 657.6199951171875, 644.780029296875, 646.97998046875, 677.3499755859375, 687.2000122070312, 709.6699829101562, 709.739990234375, 710.9199829101562, 714.6300048828125, 699.0999755859375, 713.760009765625, 709.989990234375, 707.8200073242188, 722.25, 717.1699829101562, 686.1699829101562, 665.7100219726562, 688.989990234375, 673.469970703125, 680.260009765625, 706.2999877929688, 708.489990234375, 711.2000122070312, 701.1599731445312, 711.9199829101562, 730.9099731445312, 735.719970703125, 734.0900268554688, 732.3900146484375, 733.5700073242188, 752.9199829101562, 753.8699951171875, 754.8599853515625, 736.27001953125, 743.0, 744.489990234375, 755.8300170898438, 756.989990234375, 759.489990234375, 730.1699829101562, 739.3800048828125, 751.9400024414062, 753.6400146484375, 774.3900146484375, 791.3599853515625, 777.5599975585938, 781.3099975585938, 775.47998046875, 775.219970703125, 781.530029296875, 780.5900268554688, 782.75, 793.6099853515625, 785.489990234375, 791.9400024414062, 805.719970703125, 811.0800170898438, 818.3200073242188, 843.030029296875]
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
-    }
-});
-
-
 describe("conservativeMomentumStrategyEvaluationFunction should behave correctly", () => {
+
     const dataPoint = {
         "value_1": 630,
         "value_2": 632,
@@ -239,6 +216,60 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
     });
 })
 
+describe("Ema returns correct values", () => {
+    const goodEMA1 = ema(2685.78, 713.989990234375, 24, 2)
+    const goodEMA2 = ema(2685.78, 713.989990234375, 12, 2)
+    const goodEMA3 = ema(2685.78, 713.989990234375, 6, 2)
+
+    const goodEMA1U = ema(2685.78, 713.989990234375, 24)
+    const goodEMA2U = ema(2685.78, 713.989990234375, 12)
+    const goodEMA3U = ema(2685.78, 713.989990234375, 6)
+
+    const badEMA1 = () => ema("2685.78", 713.989990234375, 24, 2)
+    const badEMA2 = () => ema(2685.78, NaN, 12, 2)
+    const badEMA3 = () => ema(2685.78, 713.989990234375, undefined, 2)
+    const badEMA4 = () => ema(2685.78, 713.989990234375, 6, {})
+
+    describe("should validate input", () => {
+
+        it("should not throw an error if smoothing is undefined", () => {
+            expect(typeof goodEMA1U === "number" && !isNaN(goodEMA1U)).toBeTruthy()
+            expect(typeof goodEMA2U === "number" && !isNaN(goodEMA2U)).toBeTruthy()
+            expect(typeof goodEMA3U === "number" && !isNaN(goodEMA3U)).toBeTruthy()
+        })
+        it("should have a default smoothing of 2 if smoothing is undefined", () => {
+            expect(goodEMA1U).toBe(goodEMA1)
+            expect(goodEMA2U).toBe(goodEMA2)
+            expect(goodEMA3U).toBe(goodEMA3)
+        })
+        it("should throw an error if prevEma is bad", () => {
+            expect(badEMA1).toThrow(Error)
+        })
+        it("should throw an error if dataPoint is bad", () => {
+            expect(badEMA2).toThrow(Error)
+        })
+        it("should throw an error if days is bad", () => {
+            expect(badEMA3).toThrow(Error)
+        })
+        it("should throw an error if smoothing is bad", () => {
+            expect(badEMA4).toThrow(Error)
+        })
+
+    })
+
+    describe("should return correct ema values", () => {
+        it("should return 2528.0367... for (2685.78, 713.989990234375, 24) input", () => {
+            expect(goodEMA1).toBeCloseTo(2528.0367992187503)
+        })
+        it("should return 2382.4276... for (2685.78, 713.989990234375, 12) input", () => {
+            expect(goodEMA2).toBeCloseTo(2382.4276908052884)
+        })
+        it("should return 2122.4114... for (2685.78, 713.989990234375, 6) input", () => {
+            expect(goodEMA3).toBeCloseTo(2122.4114257812503)
+        })
+    })
+})
+
 describe("conservativeMomentumBacktesterFunction should behave correctly", () => {
     describe("The function should validate it's parameters", () => {
         const dataSet = [
@@ -247,6 +278,24 @@ describe("conservativeMomentumBacktesterFunction should behave correctly", () =>
             { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': 653.530029296875 },
             { 'ticker': 'TSLA', 'date': '2022:05:25 00:00:00', 'value': 623.8499755859375 }
         ];
+        const badValueDataSet1 = [
+            { 'ticker': 'TSLA', 'date': '2022:05:20 00:00:00', 'value': "713.989990234375" },
+            { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': "655.02001953125" },
+            { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': "653.530029296875" },
+            { 'ticker': 'TSLA', 'date': '2022:05:25 00:00:00', 'value': "623.8499755859375" }
+        ];
+        const badValueDataSet2 = [
+            { 'ticker': 'TSLA', 'date': '2022', 'value': "713.989990234375" },
+            { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': "655.02001953125" },
+            { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': "653.530029296875" },
+            { 'ticker': 'TSLA', 'date': '2022', 'value': "623.8499755859375" }
+        ];
+        const badValueDataSet3 = [
+            { 'ticker': 'TSLAAA', 'date': '2022:05:20 00:00:00', 'value': "713.989990234375" },
+            { 'ticker': 123, 'date': '2022:05:23 00:00:00', 'value': "655.02001953125" },
+            { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': "653.530029296875" },
+            { 'ticker': 'TSLA', 'date': '2022:05:25 00:00:00', 'value': NaN }
+        ];
         const initSMA24 = 2685.78;
         const initSMA12 = 3029.18;
         const initiallyHolding = false;
@@ -254,6 +303,12 @@ describe("conservativeMomentumBacktesterFunction should behave correctly", () =>
         const lowerSell = .95;
 
         const goodBacktest = () => conservativeMomentumBacktesterFunction(dataSet, initSMA24, initSMA12, initiallyHolding,
+            upperSell, lowerSell);
+        const badDatasetValuesBacktest1 = () => conservativeMomentumBacktesterFunction(badValueDataSet1, initSMA24, initSMA12, initiallyHolding,
+            upperSell, lowerSell);
+        const badDatasetValuesBacktest2 = () => conservativeMomentumBacktesterFunction(badValueDataSet2, initSMA24, initSMA12, initiallyHolding,
+            upperSell, lowerSell);
+        const badDatasetValuesBacktest3 = () => conservativeMomentumBacktesterFunction(badValueDataSet3, initSMA24, initSMA12, initiallyHolding,
             upperSell, lowerSell);
         const badDatasetBacktest = () => conservativeMomentumBacktesterFunction({}, initSMA24, initSMA12, initiallyHolding,
             upperSell, lowerSell);
@@ -264,6 +319,14 @@ describe("conservativeMomentumBacktesterFunction should behave correctly", () =>
         const badSellBacktest = () => conservativeMomentumBacktesterFunction(dataSet, initSMA24, initSMA12, initiallyHolding,
             "upperSell", lowerSell);
 
+        describe("should throw an error if the values of the dataset are not of the right type", () => {
+            it("should have string type for all values except for the value, which is number", () => {
+                expect(badDatasetValuesBacktest1).toThrow(Error);
+                expect(badDatasetValuesBacktest2).toThrow(Error);
+                expect(badDatasetValuesBacktest3).toThrow(Error);
+            })
+        })
+
         it("should not throw an error if the function arguments are correct", () => {
             expect(goodBacktest).not.toThrow(Error);
         })
@@ -272,20 +335,144 @@ describe("conservativeMomentumBacktesterFunction should behave correctly", () =>
         })
         it("should throw an error if initSMA is bad", () => {
             expect(badSMABacktest).toThrow(Error);
-         })
+        })
         it("should throw an error if initiallyHolding is bad", () => {
             expect(badHoldingBacktest).toThrow(Error);
-         })
-        it("should throw an error if Sell is bad", () => { 
+        })
+        it("should throw an error if Sell is bad", () => {
             expect(badSellBacktest).toThrow(Error);
         })
     })
 
+    /*
     describe("The function should return a list of dictionaries that have the right values", () => {
+        it("should throw an error if the ticker is not valid for any dict in the data set", () => {
 
+        });
+
+        it("should throw an error if the date is not valid for any dict in the data set", () => {
+
+        });
+
+        it("should throw an error if the value is not valid for any dict in the data set", () => {
+
+        });
     })
+    */
 
     describe("The function should return the right backtest for a stock", () => {
+        // other input variables
+        const initSMA24 = 2685.78;
+        const initSMA12 = 3029.18;
+        const initHolding = false;
+        const upperSell = 1.1;
+        const lowerSell = .95;
 
+        // input
+        const goodInput1 = [
+            { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': 655.02001953125 },
+            { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': 653.530029296875 },
+            { 'ticker': 'TSLA', 'date': '2022:05:25 00:00:00', 'value': 623.8499755859375 },
+            { 'ticker': 'TSLA', 'date': '2022:05:26 00:00:00', 'value': 661.4199829101562 },
+            { 'ticker': 'TSLA', 'date': '2022:05:27 00:00:00', 'value': 723.25 }
+        ] // (TSLA, 1D, 1wk) (as of May 29 2022)
+
+        const goodInput2 = [
+            { 'ticker': 'ETH-USD', 'date': '2022:04:30 00:00:00', 'value': 2815.533447265625 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:01 00:00:00', 'value': 2729.994140625 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:02 00:00:00', 'value': 2827.614013671875 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:03 00:00:00', 'value': 2857.15234375 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:04 00:00:00', 'value': 2783.131103515625 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:05 00:00:00', 'value': 2940.2265625 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:06 00:00:00', 'value': 2748.931640625 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:07 00:00:00', 'value': 2694.991943359375 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:08 00:00:00', 'value': 2636.121826171875 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:09 00:00:00', 'value': 2518.50830078125 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:10 00:00:00', 'value': 2242.650390625 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:11 00:00:00', 'value': 2342.754150390625 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:12 00:00:00', 'value': 2072.504638671875 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:13 00:00:00', 'value': 1960.12255859375 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:14 00:00:00', 'value': 2014.2806396484375 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:15 00:00:00', 'value': 2056.18310546875 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:16 00:00:00', 'value': 2145.8369140625 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:17 00:00:00', 'value': 2022.88232421875 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:18 00:00:00', 'value': 2090.4599609375 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:19 00:00:00', 'value': 1916.1495361328125 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:20 00:00:00', 'value': 2018.0001220703125 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:21 00:00:00', 'value': 1961.0179443359375 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:22 00:00:00', 'value': 1974.670654296875 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:23 00:00:00', 'value': 2042.3447265625 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:24 00:00:00', 'value': 1972.390869140625 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:25 00:00:00', 'value': 1978.677001953125 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:26 00:00:00', 'value': 1945.0333251953125 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:27 00:00:00', 'value': 1802.5438232421875 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:28 00:00:00', 'value': 1724.635986328125 },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:30 00:00:00', 'value': 1811.2347412109375 }
+        ] // (ETH-USD, 1D, 1mo) (as of May 29 2022)
+
+        // output
+        const goodOutput1 = [
+            { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': 653.530029296875, 'ema24': 2523.3192015625004, 'ema12': 2663.924618389423, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+            { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': 623.8499755859375, 'ema24': 2373.7360677812508, 'ema12': 2354.6331431444155, 'holding_stock': false, 'current_profitability_multiplier': 0.9545850192333627, 'position_evaluation': 'SELL', 'position_two_step_evaluation': 'SELL and HOLD' }
+        ] // (TSLA, 1D, 1wk) (as of May 29 2022)
+
+        const goodOutput2 = [
+            { 'ticker': 'ETH-USD', 'date': '2022:04:30 00:00:00', 'value': 2729.994140625, 'ema24': 2696.16027578125, 'ema12': 2996.3112995793267, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:01 00:00:00', 'value': 2827.614013671875, 'ema24': 2698.8669849687503, 'ema12': 2955.3394289709686, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:02 00:00:00', 'value': 2857.15234375, 'ema24': 2709.1667472650006, 'ema12': 2935.6893650788, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:03 00:00:00', 'value': 2783.131103515625, 'ema24': 2721.0055949838006, 'ema12': 2923.606746412831, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:04 00:00:00', 'value': 2940.2265625, 'ema24': 2725.975635666347, 'ema12': 2901.99510904403, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:05 00:00:00', 'value': 2748.931640625, 'ema24': 2743.1157098130393, 'ema12': 2907.8768711141793, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:06 00:00:00', 'value': 2694.991943359375, 'ema24': 2743.5809842779963, 'ema12': 2883.4237587312286, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:07 00:00:00', 'value': 2636.121826171875, 'ema24': 2739.6938610045063, 'ema12': 2854.43424867402, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:08 00:00:00', 'value': 2518.50830078125, 'ema24': 2731.408098217896, 'ema12': 2820.8477221352287, 'holding_stock': false, 'current_profitability_multiplier': 0.9225324931300648, 'position_evaluation': 'SELL', 'position_two_step_evaluation': 'SELL and BUY' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:09 00:00:00', 'value': 2242.650390625, 'ema24': 2714.3761144229647, 'ema12': 2774.3339650038474, 'holding_stock': true, 'current_profitability_multiplier': 0.9225324931300648, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:10 00:00:00', 'value': 2342.754150390625, 'ema24': 2676.6380565191275, 'ema12': 2692.5364920224865, 'holding_stock': true, 'current_profitability_multiplier': 0.9225324931300648, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:11 00:00:00', 'value': 2072.504638671875, 'ema24': 2649.9273440288475, 'ema12': 2638.723824079123, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'SELL', 'position_two_step_evaluation': 'SELL and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:12 00:00:00', 'value': 1960.12255859375, 'ema24': 2603.73352760029, 'ema12': 2551.613180170316, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:13 00:00:00', 'value': 2014.2806396484375, 'ema24': 2552.244650079767, 'ema12': 2460.6146230046907, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:14 00:00:00', 'value': 2056.18310546875, 'ema24': 2509.207529245261, 'ema12': 2391.947856334498, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:15 00:00:00', 'value': 2145.8369140625, 'ema24': 2472.9655753431402, 'ema12': 2340.2917408166904, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:16 00:00:00', 'value': 2022.88232421875, 'ema24': 2446.795282440689, 'ema12': 2310.375613623738, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:17 00:00:00', 'value': 2090.4599609375, 'ema24': 2412.8822457829338, 'ema12': 2266.1458767922013, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:18 00:00:00', 'value': 1916.1495361328125, 'ema24': 2387.0884629952993, 'ema12': 2239.1172743530165, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:19 00:00:00', 'value': 2018.0001220703125, 'ema24': 2349.413348846301, 'ema12': 2189.4299300114467, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:20 00:00:00', 'value': 1961.0179443359375, 'ema24': 2322.900290704222, 'ema12': 2163.056113405118, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:21 00:00:00', 'value': 1974.670654296875, 'ema24': 2293.949702994759, 'ema12': 2131.9733181637057, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:22 00:00:00', 'value': 2042.3447265625, 'ema24': 2268.4073790989282, 'ema12': 2107.7729083380395, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:23 00:00:00', 'value': 1972.390869140625, 'ema24': 2250.322366896014, 'ema12': 2097.7070342187258, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:24 00:00:00', 'value': 1978.677001953125, 'ema24': 2228.0878470755833, 'ema12': 2078.4276242067103, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:25 00:00:00', 'value': 1945.0333251953125, 'ema24': 2208.134979465787, 'ema12': 2063.0813746292356, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' },
+            { 'ticker': 'ETH-USD', 'date': '2022:05:26 00:00:00', 'value': 1802.5438232421875, 'ema24': 2187.0868471241492, 'ema12': 2044.920136254786, 'holding_stock': false, 'current_profitability_multiplier': 0.8525416530950017, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' }
+        ] // (ETH-USD, 1D, 1mo) (as of May 29 2022)
+
+        const badOutput1 = [
+            { 'ticker': 'TSLAA', 'date': '2022:05:23 00:', 'value': "653.530029296875", 'ema24': 2523.3192015625004, 'ema12': 2663.924618389423, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+            { 'ticker': 'TSLAA', 'date': '2022:05:24 00:00:00', 'value': 623.8499755859375, 'ema24': 2373.7360677812508, 'ema12': 2354.6331431444155, 'holding_stock': "false", 'current_profitability_multiplier': 0.9545850192333627, 'position_evaluation': 'SELL', 'position_two_step_evaluation': 'SELL and HOLD' }
+        ]
+
+        const backtested = conservativeMomentumBacktesterFunction(
+            goodInput1, initSMA24, initSMA12, initHolding, upperSell, lowerSell)
+
+        const backtested2 = conservativeMomentumBacktesterFunction(
+            goodInput2, initSMA24, initSMA12, initHolding, upperSell, lowerSell)
+
+        it("should match the test case array length for (TSLA, 1D, 1wk) (as of May 29 2022)", () => {
+            expect(backtested.length).toBe(goodOutput1.length);
+        })
+
+        it("should match test case for API data (TSLA, 1D, 1wk) (as of May 29 2022)", () => {
+            expect(backtested).toEqual(goodOutput1);
+            expect(backtested).not.toEqual(badOutput1);
+        })
+
+        it("should match the test case array length for (ETH-USD, 1D, 1mo) (as of May 29 2022)", () => {
+            expect(backtested2.length).toBe(goodOutput2.length);
+        })
+
+        it("should match test case for API data (ETH-USD, 1D, 1mo) (as of May 29 2022)", () => {
+            expect(backtested2).toEqual(goodOutput2);
+            expect(backtested2).not.toEqual(badOutput1);
+        })
     })
 })
