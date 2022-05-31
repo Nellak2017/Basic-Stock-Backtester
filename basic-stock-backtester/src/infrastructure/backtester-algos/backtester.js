@@ -95,10 +95,10 @@ export const conservativeMomentumBacktesterFunction = (dataSet, initSMA24, initS
     const properDataSetKeys = new Set(["ticker", "date", "value"]);
     const everyDictsKeys = dataSet.map(dict => Object.keys(dict));
 
-    if (!everyDictsKeys.every((arr) => areSetsEqual(properDataSetKeys, new Set(arr)))) { throw new Error("dataSet entered to backtester is bad") }
-    if (typeof initSMA24 !== "number" || typeof initSMA12 !== "number" || isNaN(initSMA24) || isNaN(initSMA12)) { throw new Error("initialSMA entered to backtester is bad") }
-    if (typeof initiallyHolding !== "boolean") { throw new Error("initiallyHolding entered to backtester is bad") }
-    if (typeof upperSell !== "number" || typeof lowerSell !== "number" || isNaN(upperSell) || isNaN(lowerSell)) { throw new Error("upper/lower sell entered to backtester is bad") }
+    if (!everyDictsKeys.every((arr) => areSetsEqual(properDataSetKeys, new Set(arr)))) { throw new Error(`dataSet entered to backtester is bad`) }
+    if (typeof initSMA24 !== "number" || typeof initSMA12 !== "number" || isNaN(initSMA24) || isNaN(initSMA12)) { throw new Error(`initialSMA entered to backtester is bad: initSMA12: ${initSMA12} initSMA24: ${initSMA24}`) }
+    if (typeof initiallyHolding !== "boolean") { throw new Error(`initiallyHolding entered to backtester is bad: ${initiallyHolding}`) }
+    if (typeof upperSell !== "number" || typeof lowerSell !== "number" || isNaN(upperSell) || isNaN(lowerSell)) { throw new Error(`upper/lower sell entered to backtester is bad: upperSell: ${upperSell} , lowerSell: ${lowerSell}`) }
 
     // Variables defined
     // ------------------------
