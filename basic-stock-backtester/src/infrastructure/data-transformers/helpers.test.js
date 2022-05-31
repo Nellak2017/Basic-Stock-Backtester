@@ -5,6 +5,7 @@ import {
     randomColor,
     extractData,
     DTO,
+    toBacktesterInput,
     getDefaultChartData,
     load,
     defaultLoad
@@ -33,7 +34,8 @@ import {
     STRATEGY,
     EMA_LOWER_INDICATOR,
     EMA_UPPER_INDICATOR,
-    DEFAULT_RETRIES
+    DEFAULT_RETRIES,
+    DATE_FORMAT
 } from '../content/constants'
 
 import {
@@ -46,6 +48,7 @@ import { getChartData } from '../api/chartData'
 import axios from 'axios';
 import ReactDom from 'react-dom';
 import { render } from '@testing-library/react';
+import moment from 'moment';
 
 
 jest.mock('axios');
@@ -161,10 +164,229 @@ describe('getDefaultChartData should try to get all the stock period chart data 
     const good_dummy_available_values = Object.values(dummy_stock)
     const bad_dummy_available_values = Object.values(dummy_stock_bad_values)
 
-    const TSLA_dummy_API_Response = [
-        { 'ticker': 'TSLA', 'date': '2022:05:16 00:00:00', 'value': '747.3599853515625', 'ema24': '2532.290397851563', 'ema12': '2681.1769189453125', 'holding_stock': 'True', 'current_profitability_multiplier': '1.0', 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
-        { 'ticker': 'TSLA', 'date': '2022:05:17 00:00:00', 'value': '744.52001953125', 'ema24': '2389.495964851563', 'ema12': '2383.666621469351', 'holding_stock': 'False', 'current_profitability_multiplier': '0.9962000028420352', 'position_evaluation': 'SELL', 'position_two_step_evaluation': 'SELL and HOLD' }
-    ]; // dummy values given: ticker = 'TSLA', period = 1w , interval = 1d
+    const TSLA_dummy_API_Response = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {
+                        "symbol": "TSLA",
+                        "dataGranularity": "1d",
+                        "range": "1y"
+                    },
+                    "timestamp": {
+                        0: 1622035800,
+                        1: 1622122200,
+                        2: 1622208600,
+                        3: 1622554200,
+                        4: 1622640600,
+                        5: 1622727000,
+                        6: 1622813400,
+                        7: 1623072600,
+                        8: 1623159000,
+                        9: 1623245400,
+                        10: 1623331800,
+                        11: 1623418200,
+                        12: 1623677400,
+                        13: 1623763800,
+                        14: 1623850200,
+                        15: 1623936600,
+                        16: 1624023000,
+                        17: 1624282200,
+                        18: 1624368600,
+                        19: 1624455000,
+                        20: 1624541400,
+                        21: 1624627800,
+                        22: 1624887000,
+                        23: 1624973400,
+                        24: 1625059800,
+                        25: 1625146200,
+                        26: 1625232600,
+                        27: 1625578200,
+                        28: 1625664600,
+                        29: 1625751000,
+                        30: 1625837400,
+                        31: 1626096600,
+                        32: 1626183000,
+                        33: 1626269400,
+                        34: 1626355800,
+                        35: 1626442200,
+                        36: 1626701400,
+                        37: 1626787800,
+                        38: 1626874200,
+                        39: 1626960600,
+                        40: 1627047000,
+                        41: 1627306200,
+                        42: 1627392600,
+                        43: 1627479000,
+                        44: 1627565400,
+                        45: 1627651800,
+                        46: 1627911000,
+                        47: 1627997400,
+                        48: 1628083800,
+                        49: 1628170200,
+                        50: 1628256600,
+                        51: 1628515800,
+                        52: 1628602200,
+                        53: 1628688600,
+                        54: 1628775000,
+                        55: 1628861400,
+                        56: 1629120600,
+                        57: 1629207000,
+                        58: 1629293400,
+                        59: 1629379800,
+                        60: 1629466200,
+                        61: 1629725400,
+                        62: 1629811800,
+                        63: 1629898200,
+                        64: 1629984600,
+                        65: 1630071000,
+                        66: 1630330200,
+                        67: 1630416600,
+                        68: 1630503000,
+                        69: 1630589400,
+                        70: 1630675800,
+                        71: 1631021400,
+                        72: 1631107800,
+                        73: 1631194200,
+                        74: 1631280600,
+                        75: 1631539800,
+                        76: 1631626200,
+                        77: 1631712600,
+                        78: 1631799000,
+                        79: 1631885400,
+                        80: 1632144600,
+                        81: 1632231000,
+                        82: 1632317400,
+                        83: 1632403800,
+                        84: 1632490200,
+                        85: 1632749400,
+                        86: 1632835800,
+                        87: 1632922200,
+                        88: 1633008600,
+                        89: 1633095000,
+                        90: 1633354200,
+                        91: 1633440600,
+                        92: 1633527000,
+                        93: 1633613400,
+                        94: 1633699800,
+                        95: 1633959000,
+                        96: 1634045400,
+                        97: 1634131800,
+                        98: 1634218200,
+                        99: 1634304600
+                    },
+                    "indicators": {
+                        "quote": [
+                            {
+                                "close": {
+                                    0: 619.1300048828125,
+                                    1: 630.8499755859375,
+                                    2: 625.219970703125,
+                                    3: 623.9000244140625,
+                                    4: 605.1199951171875,
+                                    5: 572.8400268554688,
+                                    6: 599.0499877929688,
+                                    7: 605.1300048828125,
+                                    8: 603.5900268554688,
+                                    9: 598.780029296875,
+                                    10: 610.1199951171875,
+                                    11: 609.8900146484375,
+                                    12: 617.6900024414062,
+                                    13: 599.3599853515625,
+                                    14: 604.8699951171875,
+                                    15: 616.5999755859375,
+                                    16: 623.3099975585938,
+                                    17: 620.8300170898438,
+                                    18: 623.7100219726562,
+                                    19: 656.5700073242188,
+                                    20: 679.8200073242188,
+                                    21: 671.8699951171875,
+                                    22: 688.719970703125,
+                                    23: 680.760009765625,
+                                    24: 679.7000122070312,
+                                    25: 677.9199829101562,
+                                    26: 678.9000244140625,
+                                    27: 659.5800170898438,
+                                    28: 644.6500244140625,
+                                    29: 652.8099975585938,
+                                    30: 656.9500122070312,
+                                    31: 685.7000122070312,
+                                    32: 668.5399780273438,
+                                    33: 653.3800048828125,
+                                    34: 650.5999755859375,
+                                    35: 644.219970703125,
+                                    36: 646.219970703125,
+                                    37: 660.5,
+                                    38: 655.2899780273438,
+                                    39: 649.260009765625,
+                                    40: 643.3800048828125,
+                                    41: 657.6199951171875,
+                                    42: 644.780029296875,
+                                    43: 646.97998046875,
+                                    44: 677.3499755859375,
+                                    45: 687.2000122070312,
+                                    46: 709.6699829101562,
+                                    47: 709.739990234375,
+                                    48: 710.9199829101562,
+                                    49: 714.6300048828125,
+                                    50: 699.0999755859375,
+                                    51: 713.760009765625,
+                                    52: 709.989990234375,
+                                    53: 707.8200073242188,
+                                    54: 722.25,
+                                    55: 717.1699829101562,
+                                    56: 686.1699829101562,
+                                    57: 665.7100219726562,
+                                    58: 688.989990234375,
+                                    59: 673.469970703125,
+                                    60: 680.260009765625,
+                                    61: 706.2999877929688,
+                                    62: 708.489990234375,
+                                    63: 711.2000122070312,
+                                    64: 701.1599731445312,
+                                    65: 711.9199829101562,
+                                    66: 730.9099731445312,
+                                    67: 735.719970703125,
+                                    68: 734.0900268554688,
+                                    69: 732.3900146484375,
+                                    70: 733.5700073242188,
+                                    71: 752.9199829101562,
+                                    72: 753.8699951171875,
+                                    73: 754.8599853515625,
+                                    74: 736.27001953125,
+                                    75: 743,
+                                    76: 744.489990234375,
+                                    77: 755.8300170898438,
+                                    78: 756.989990234375,
+                                    79: 759.489990234375,
+                                    80: 730.1699829101562,
+                                    81: 739.3800048828125,
+                                    82: 751.9400024414062,
+                                    83: 753.6400146484375,
+                                    84: 774.3900146484375,
+                                    85: 791.3599853515625,
+                                    86: 777.5599975585938,
+                                    87: 781.3099975585938,
+                                    88: 775.47998046875,
+                                    89: 775.219970703125,
+                                    90: 781.530029296875,
+                                    91: 780.5900268554688,
+                                    92: 782.75,
+                                    93: 793.6099853515625,
+                                    94: 785.489990234375,
+                                    95: 791.9400024414062,
+                                    96: 805.719970703125,
+                                    97: 811.0800170898438,
+                                    98: 818.3200073242188,
+                                    99: 843.030029296875,
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }; // dummy values given: ticker = 'TSLA', period = 1w , interval = 1d
 
     // IndividualStock Tests
     describe('parameter individualStock is type [{string:string}] with keys: [ticker, interval, upperSell, lowerSell, ...] and uses valid Default values', () => {
@@ -247,101 +469,404 @@ describe('getDefaultChartData should try to get all the stock period chart data 
     })
 
     // getDefaultChartData behavior tests
-    /*
+
     describe("getDefaultChartData behaves as expected on Mock Data", () => {
 
-        it("should get the expected API data on Sucessful API Response", (done) => {
+        describe("should get the expected API data on Sucessful API Response", () => {
             // See also: https://vhudyma-blog.eu/3-ways-to-mock-axios-in-jest/
             const TSLA_Mock_Stock = {
                 "ticker": "TSLA",
                 "interval": ONE_DAY,
-                "upperSell": UPPER_SELL,
-                "lowerSell": LOWER_SELL,
-                "initHolding": INIT_HOLDING,
-                "strategy": STRATEGY,
-                "lowerIndicator": EMA_LOWER_INDICATOR,
-                "upperIndicator": EMA_UPPER_INDICATOR,
-                "period": ONE_WEEK,
+                "period": ONE_WEEK
             }
-            axios.get.mockResolvedValueOnce(TSLA_dummy_API_Response);
 
-            // Expect Server Response to have Correct Object Format 
-            getChartData(TSLA_Mock_Stock, (res) => {
-                try {
-                    // Expect the keys in the response array to be what I expect and nothing more or less
-                    const resKeysSet = new Set(Object.keys(res[0]));
-                    const groundTruthSet = new Set(['ticker', 'date', 'value', 'ema24', 
-                    'ema12', 'holding_stock', 'current_profitability_multiplier', 'position_evaluation', 
-                    'position_two_step_evaluation'])
-                    const resKeysAreCorrect = areSetsEqual(resKeysSet, groundTruthSet)
-                    expect(resKeysAreCorrect).toBeTruthy();
+            axios.get.mockResolvedValue(TSLA_dummy_API_Response);
 
-                    // Expect the values to be in the correct format
-                    // See also: https://regex-generator.olafneumann.org/
-                    const matchFloat = /[0-9]*\.[0-9]+/i;
-                    const matchString = /[a-zA-Z]+/i;
-                    const matchDateTime = /\d\d[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\s[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?/i;
-                    const matchBool = /^(True|False)$/i;
-                    const matchEvaluation = /^(Buy|Sell|Hold)$/i;
-                    const matchTwoEvaluation = /^(BUY and HOLD|SELL and HOLD|HOLD and HOLD|SELL and BUY|HOLD and SELL|BUY and SELL)$/i;
-                    
-                    const tickerValid = !!matchString.exec(res[0]["ticker"]) // true if match, false if not
-                    const dateValid = !!matchDateTime.exec(res[0]["date"])
-                    const valueValid = !!matchFloat.exec(res[0]["value"])
-                    const lowerIndicatorValid = !!matchFloat.exec(res[0]["ema24"])
-                    const upperIndicatorValid = !!matchFloat.exec(res[0]["ema12"])
-                    const hodlValid = !!matchBool.exec(res[0]["holding_stock"])
-                    const profitValid = !!matchFloat.exec(res[0]["current_profitability_multiplier"])
-                    const validPosition = !!matchEvaluation.exec(res[0]["position_evaluation"])
-                    const validTwoPosition = !!matchTwoEvaluation.exec(res[0]["position_two_step_evaluation"])
-
-                    expect(tickerValid).toBeTruthy();
-                    expect(dateValid).toBeTruthy();
-                    expect(valueValid).toBeTruthy();
-                    expect(lowerIndicatorValid).toBeTruthy();
-                    expect(upperIndicatorValid).toBeTruthy();
-                    expect(hodlValid).toBeTruthy();
-                    expect(profitValid).toBeTruthy();
-                    expect(validPosition).toBeTruthy();
-                    expect(validTwoPosition).toBeTruthy();
-
-                    done();
-                } catch (err) {
-                    done(err);
-                }
-            }, (err) => {
-                done(err);
-                return;
+            it("Expect the API response to not be undefined", async () => {
+                // Get Server Response 
+                const response = await getChartData(TSLA_Mock_Stock)
+                expect(response).not.toBe(undefined)
             })
 
-            // Expect Server to have been called with this string
-            expect(axios.get).toHaveBeenCalledWith(`http://localhost:5000/${STRATEGY}?ticker=${"TSLA"}&interval=${ONE_DAY}&period=${ONE_WEEK.toLowerCase()}&upperSell=${UPPER_SELL}&lowerSell=${LOWER_SELL}&initHolding=${INIT_HOLDING}&lowerIndicator=${EMA_LOWER_INDICATOR}&upperIndicator=${EMA_UPPER_INDICATOR}`
-                , {
-                    headers: {
-                        'content-type': 'application/json',
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Credentials': true
-                    }, timeout: 4000
-                });
+            it("Expect the field meta to be defined", async () => {
+                // Get Server Response 
+                const response = await getChartData(TSLA_Mock_Stock)
+                const firstDataPoint = response.chart.result[0].meta
+                expect(firstDataPoint).not.toBe(undefined)
+            })
+
+            it("Expect the field timestamp to be defined", async () => {
+                // Get Server Response 
+                const response = await getChartData(TSLA_Mock_Stock)
+                const firstDataPoint = response.chart.result[0].timestamp
+                expect(firstDataPoint).not.toBe(undefined)
+            })
+
+            it("Expect the field quote to be defined", async () => {
+                // Get Server Response 
+                const response = await getChartData(TSLA_Mock_Stock)
+                const firstDataPoint = response.chart.result[0].indicators.quote[0]
+                expect(firstDataPoint).not.toBe(undefined)
+            })
+
+            it("Expect the values to be in the correct format", async () => {
+                // Get Server Response 
+                const response = await getChartData(TSLA_Mock_Stock)
+                const firstDataPoint = response.chart.result[0].indicators.quote[0].close[0]
+                expect(Object.values(firstDataPoint).every(value => typeof value === 'number')).toBeTruthy()
+            })
+
+            it("Should call the server once with the proper data", async () => {
+                // Get Server Response 
+                const response = await getChartData(TSLA_Mock_Stock)
+                // Expect Server to have been called with this string
+                expect(axios.get).toHaveBeenCalledWith("https://yh-finance.p.rapidapi.com/stock/v3/get-chart"
+                    , {
+                        params: {
+                            interval: TSLA_Mock_Stock["interval"],
+                            symbol: TSLA_Mock_Stock["ticker"],
+                            range: TSLA_Mock_Stock["period"],
+                            period1: undefined,
+                            period2: undefined,
+                            region: 'US',
+                            includePrePost: 'false',
+                            useYfid: 'true',
+                            includeAdjustedClose: 'true',
+                            events: 'capitalGain,div,split'
+                        },
+                        headers: {
+                            'X-RapidAPI-Host': 'yh-finance.p.rapidapi.com',
+                            'X-RapidAPI-Key': process.env.NEXT_PUBLIC_RAPIDAPI_KEY
+                        }, timeout: 4000
+                    });
+            })
         })
 
         // Todo: Figure out how to test axios-retry
-        it("should retry getting visiblePeriod's API data up to retries times, but short circuit if sucessful", async () => {
-
-        })
-
+        it("should retry getting visiblePeriod's API data up to retries times, but short circuit if sucessful", async () => { })
         // Todo: Figure out how to test axios-retry
         it("should not retry getting non-visible periods's API data", () => { })
-        
-
-        describe("should setChartDataMemo to the correct values on Sucessful API response", () => {
-            it("should set memo to be individual value for visible period, and default for rest", () => {})
-            it("should set memo to be individual value for visible period, and to nothing when no other defaults are passed in", () => {})
-        })
-        
-        it("should not setChartDataMemo on Failed API response", () => { })
-        
-        it("should throw an error on Failed API response and display error to console", () => { })
     })
-    */
+})
+
+describe('toBacktesterInput should convert API data into proper form to be handled by Memo', () => {
+    // Mock Data (Limited Version of a Fake API Response)
+    // ------------------
+    const goodInput = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {
+                        "symbol": "TSLA",
+                        "dataGranularity": "1d",
+                        "range": "1y"
+                    },
+                    "timestamp": {
+                        0: 1622035800,
+                        1: 1622122200,
+                        2: 1622208600,
+                        3: 1622554200,
+                        4: 1622640600,
+                        5: 1622727000,
+                        6: 1622813400,
+                        7: 1623072600,
+                        8: 1623159000,
+                        9: 1623245400,
+                        10: 1623331800,
+                        11: 1623418200,
+                        12: 1623677400,
+                        13: 1623763800,
+                        14: 1623850200,
+                        15: 1623936600,
+                        16: 1624023000,
+                        17: 1624282200,
+                        18: 1624368600,
+                        19: 1624455000,
+                        20: 1624541400,
+                        21: 1624627800,
+                        22: 1624887000,
+                        23: 1624973400,
+                        24: 1625059800,
+                        25: 1625146200,
+                        26: 1625232600,
+                        27: 1625578200,
+                        28: 1625664600,
+                        29: 1625751000,
+                        30: 1625837400,
+                        31: 1626096600,
+                        32: 1626183000,
+                        33: 1626269400,
+                        34: 1626355800,
+                        35: 1626442200,
+                        36: 1626701400,
+                        37: 1626787800,
+                        38: 1626874200,
+                        39: 1626960600,
+                        40: 1627047000,
+                        41: 1627306200,
+                        42: 1627392600,
+                        43: 1627479000,
+                        44: 1627565400,
+                        45: 1627651800,
+                        46: 1627911000,
+                        47: 1627997400,
+                        48: 1628083800,
+                        49: 1628170200,
+                        50: 1628256600,
+                        51: 1628515800,
+                        52: 1628602200,
+                        53: 1628688600,
+                        54: 1628775000,
+                        55: 1628861400,
+                        56: 1629120600,
+                        57: 1629207000,
+                        58: 1629293400,
+                        59: 1629379800,
+                        60: 1629466200,
+                        61: 1629725400,
+                        62: 1629811800,
+                        63: 1629898200,
+                        64: 1629984600,
+                        65: 1630071000,
+                        66: 1630330200,
+                        67: 1630416600,
+                        68: 1630503000,
+                        69: 1630589400,
+                        70: 1630675800,
+                        71: 1631021400,
+                        72: 1631107800,
+                        73: 1631194200,
+                        74: 1631280600,
+                        75: 1631539800,
+                        76: 1631626200,
+                        77: 1631712600,
+                        78: 1631799000,
+                        79: 1631885400,
+                        80: 1632144600,
+                        81: 1632231000,
+                        82: 1632317400,
+                        83: 1632403800,
+                        84: 1632490200,
+                        85: 1632749400,
+                        86: 1632835800,
+                        87: 1632922200,
+                        88: 1633008600,
+                        89: 1633095000,
+                        90: 1633354200,
+                        91: 1633440600,
+                        92: 1633527000,
+                        93: 1633613400,
+                        94: 1633699800,
+                        95: 1633959000,
+                        96: 1634045400,
+                        97: 1634131800,
+                        98: 1634218200,
+                        99: 1634304600
+                    },
+                    "indicators": {
+                        "quote": [
+                            {
+                                "close": {
+                                    0: 619.1300048828125,
+                                    1: 630.8499755859375,
+                                    2: 625.219970703125,
+                                    3: 623.9000244140625,
+                                    4: 605.1199951171875,
+                                    5: 572.8400268554688,
+                                    6: 599.0499877929688,
+                                    7: 605.1300048828125,
+                                    8: 603.5900268554688,
+                                    9: 598.780029296875,
+                                    10: 610.1199951171875,
+                                    11: 609.8900146484375,
+                                    12: 617.6900024414062,
+                                    13: 599.3599853515625,
+                                    14: 604.8699951171875,
+                                    15: 616.5999755859375,
+                                    16: 623.3099975585938,
+                                    17: 620.8300170898438,
+                                    18: 623.7100219726562,
+                                    19: 656.5700073242188,
+                                    20: 679.8200073242188,
+                                    21: 671.8699951171875,
+                                    22: 688.719970703125,
+                                    23: 680.760009765625,
+                                    24: 679.7000122070312,
+                                    25: 677.9199829101562,
+                                    26: 678.9000244140625,
+                                    27: 659.5800170898438,
+                                    28: 644.6500244140625,
+                                    29: 652.8099975585938,
+                                    30: 656.9500122070312,
+                                    31: 685.7000122070312,
+                                    32: 668.5399780273438,
+                                    33: 653.3800048828125,
+                                    34: 650.5999755859375,
+                                    35: 644.219970703125,
+                                    36: 646.219970703125,
+                                    37: 660.5,
+                                    38: 655.2899780273438,
+                                    39: 649.260009765625,
+                                    40: 643.3800048828125,
+                                    41: 657.6199951171875,
+                                    42: 644.780029296875,
+                                    43: 646.97998046875,
+                                    44: 677.3499755859375,
+                                    45: 687.2000122070312,
+                                    46: 709.6699829101562,
+                                    47: 709.739990234375,
+                                    48: 710.9199829101562,
+                                    49: 714.6300048828125,
+                                    50: 699.0999755859375,
+                                    51: 713.760009765625,
+                                    52: 709.989990234375,
+                                    53: 707.8200073242188,
+                                    54: 722.25,
+                                    55: 717.1699829101562,
+                                    56: 686.1699829101562,
+                                    57: 665.7100219726562,
+                                    58: 688.989990234375,
+                                    59: 673.469970703125,
+                                    60: 680.260009765625,
+                                    61: 706.2999877929688,
+                                    62: 708.489990234375,
+                                    63: 711.2000122070312,
+                                    64: 701.1599731445312,
+                                    65: 711.9199829101562,
+                                    66: 730.9099731445312,
+                                    67: 735.719970703125,
+                                    68: 734.0900268554688,
+                                    69: 732.3900146484375,
+                                    70: 733.5700073242188,
+                                    71: 752.9199829101562,
+                                    72: 753.8699951171875,
+                                    73: 754.8599853515625,
+                                    74: 736.27001953125,
+                                    75: 743,
+                                    76: 744.489990234375,
+                                    77: 755.8300170898438,
+                                    78: 756.989990234375,
+                                    79: 759.489990234375,
+                                    80: 730.1699829101562,
+                                    81: 739.3800048828125,
+                                    82: 751.9400024414062,
+                                    83: 753.6400146484375,
+                                    84: 774.3900146484375,
+                                    85: 791.3599853515625,
+                                    86: 777.5599975585938,
+                                    87: 781.3099975585938,
+                                    88: 775.47998046875,
+                                    89: 775.219970703125,
+                                    90: 781.530029296875,
+                                    91: 780.5900268554688,
+                                    92: 782.75,
+                                    93: 793.6099853515625,
+                                    94: 785.489990234375,
+                                    95: 791.9400024414062,
+                                    96: 805.719970703125,
+                                    97: 811.0800170898438,
+                                    98: 818.3200073242188,
+                                    99: 843.030029296875,
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+    const goodInputTimeStamps = goodInput.chart.result[0].timestamp
+    const goodInputMeta = goodInput.chart.result[0].meta
+    const goodInputIndicators = goodInput.chart.result[0].indicators
+
+    // Mock Functions
+    // ------------------
+    const goodInputFx = toBacktesterInput(goodInput)
+
+    const badInputFx = () => getDefaultChartData(badInput)
+    const badInputFx2 = () => getDefaultChartData(noMetaIn)
+    const badInputFx3 = () => getDefaultChartData(noDataIn)
+    const badInputFx4 = () => getDefaultChartData(noTimeIn)
+
+    // Variables
+    // ------------------
+    const expectedKeys = new Set(["ticker", "date", "value"])
+    const receivedKeys = goodInputFx.map(dicts => Object.keys(dicts))
+    const receivedKeysGood = receivedKeys.every(keylist => areSetsEqual(new Set(keylist), expectedKeys))
+
+    const badInput = []
+    const noMetaIn = { "chart": { "result": [{}, { "timestamp": [1622035800, 1622122200] }, { "indicators": { "quote": [1, 2, 3], "adjclose": [1, 2, 3] } }] } }
+    const noDataIn = { "chart": { "result": [{ "Hey": 1 }, { "timestamp": [1622035800, 1622122200] }, { "indicators": {} }] } }
+    const noTimeIn = { "chart": { "result": [{ "Hey": 1 }, {}, { "indicators": { "Hey": 1 } }] } }
+
+    // Backtester Function Tests
+    // ------------------
+    
+    describe('function should throw errors on improper inputs', () => {
+
+        it("should throw an error if API Meta Data is unavailable", () => {
+            expect(badInputFx).toThrow(Error);
+            expect(badInputFx2).toThrow(Error);
+        })
+
+        it("should throw an error if API Stock values are unavailable", () => {
+            expect(badInputFx).toThrow(Error);
+            expect(badInputFx3).toThrow(Error);
+        })
+
+        it("should throw an error if API timestamps is unavailable", () => {
+            expect(badInputFx).toThrow(Error);
+            expect(badInputFx4).toThrow(Error);
+        })
+    })
+
+    describe('function should convert a list of values into a list of dictionaries, consumable by backtester', () => {
+
+        it('goodInput returned function should be a list', () => {
+            expect(Array.isArray(goodInputFx)).toBeTruthy()
+        })
+
+        it("should return an array with length equal to input's value array length", () => {
+            expect(goodInputFx.length === Object.values(goodInputIndicators.quote[0].close).length).toBeTruthy();
+        })
+
+        it("should have proper output keys", () => {
+            expect(receivedKeysGood).toBeTruthy();
+        })
+
+        it("should have proper format for values", () => {
+            // See also: https://regex-generator.olafneumann.org/
+            const matchFloat = /[0-9]*\.[0-9]+/i;
+            const matchTicker = /^[a-zA-Z]{2,5}$/i;
+            const matchDateTime = /\d\d[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\s[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?/i;
+
+            // Test All Dictionary Values in Output list to see if they match Regex
+            const tickerValid = goodInputFx.map(dict => matchTicker.test(dict["ticker"]))
+            const dateValid = goodInputFx.map(dict => matchDateTime.test(dict["date"]))
+            const valueValid = goodInputFx.map(dict => matchFloat.test(dict["value"]))
+
+            expect(tickerValid).toBeTruthy();
+            expect(dateValid).toBeTruthy();
+            expect(valueValid).toBeTruthy();
+        })
+    })
+
+    describe('function should return proper values', () => {
+
+        it('should have the correct date/time for each dictionary in the output list', () => {
+            // 0. iterate through each date/time, converting to moment string with proper format: 
+            const formattedDateTimes = Object.values(goodInputTimeStamps).map(unixDate => moment.unix(goodInputTimeStamps[unixDate]).format(DATE_FORMAT)) // [formattedDates: str]
+
+            // 1. expect that every date in your output matches the expected datetimes, up to the end of the input (does not check if lists are same size): 
+            expect(goodInputFx.every((dict, index) => formattedDateTimes[index] === dict["date"])).toBeTruthy();
+        })
+
+        it('should have the correct ticker for each dictionary in the output list', () => {
+            expect(goodInputFx.every(dict => goodInputMeta.symbol === dict["ticker"])).toBeTruthy();
+        })
+
+        it('should have the correct value for each dictionary in the output list', () => {
+            expect(goodInputFx.every((dict,index) => Object.values(goodInputIndicators["quote"][0]["close"])[index] === dict["value"])).toBeTruthy();
+        })
+    })
 })

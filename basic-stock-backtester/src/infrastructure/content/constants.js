@@ -26,3 +26,4 @@ export const EMA_LOWER_INDICATOR = "EMA-24"
 export const EMA_UPPER_INDICATOR = "EMA-12"
 
 export const DEFAULT_RETRIES = 10
+export const DATE_FORMAT = "YYYY:MM:DD HH:mm:ss"

@@ -1,5 +1,6 @@
 import { getChartData } from '../api/chartData';
 import { areSetsEqual } from '../data-transformers/helpers';
+import { DATE_FORMAT } from '../content/constants';
 import moment from 'moment';
 
 export const getSmaDataPoint = async (ticker, date, days) => {
@@ -10,8 +11,8 @@ export const getSmaDataPoint = async (ticker, date, days) => {
     :return: A dictionary of the SMA value.
     */
     const regexResult = /[0-9]+:(0?[1-9]|[1][0-2]):(0?[1-9]|[12][0-9]|3[01])\s[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?/i.test(date);
-    const period1 = moment(date, "YYYY:MM:DD HH:mm:ss").subtract(days, 'days').unix();
-    const period2 = moment(date, "YYYY:MM:DD HH:mm:ss").unix();
+    const period1 = moment(date, DATE_FORMAT).subtract(days, 'days').unix();
+    const period2 = moment(date, DATE_FORMAT).unix();
     const form = { ticker, interval: "1d", period: "1y", period1, period2 };
 
     if (typeof ticker !== 'string' || ticker.length === 0 || ticker.length > 4) { throw new Error("Ticker entered is invalid in getSmaDataPoint function.")}

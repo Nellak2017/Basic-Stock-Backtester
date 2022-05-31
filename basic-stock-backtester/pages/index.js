@@ -23,6 +23,8 @@ import {
   colors,
   defaultStockIntervals,
   defaultAPIData,
+  defaultFormValues,
+  defaultDisplayed,
   defaultResData
 } from '../src/infrastructure/content/homeContent.js'
 import {
@@ -75,45 +77,86 @@ export default function Home() {
     Tooltip,
     Legend
   );
+
+  // Define Variables
+  // ----------------
   const [HighlightedPeriod, setHighlightedPeriod] = useState(ONE_DAY);
   const [Profit, setProfit] = useState(1);
   const [InMarket, setInMarket] = useState(INIT_HOLDING); // if you are invested or not
-  const [APIData, setAPIData] = useState(defaultAPIData);
+  const [APIData, setAPIData] = useState(defaultAPIData); // Stores literal API Response in it's totality
+  const [Displayed, setDisplayed] = useState(defaultDisplayed); // Shows what is on the chart (for now only works with ema12 and ema24 indicators)
   const [ChartRange, setChartRange] = useState(3600);
-  const [formValues, setFormValues] = useState({
-    ticker: DEFAULT_TICKER,
-    interval: ONE_MINUTE,
-    upperSell: UPPER_SELL,
-    lowerSell: LOWER_SELL,
-    initHolding: INIT_HOLDING,
-    strategy: STRATEGY,
-    lowerIndicator: EMA_LOWER_INDICATOR,
-    upperIndicator: EMA_UPPER_INDICATOR
-  });
+  const [formValues, setFormValues] = useState(defaultFormValues);
+
+  // Memo
+  // ----------------
+
+  // memoize values, ema12, ema24 for each chart
+  const chartDataMemo = useMemo(() => {
+    /**
+     * (I think this is how it will be laid out, generally)
+     * {
+     *  1D: {values: [...], ema12: [...], ema24: [...]},
+     *  1WK: {values: [...], ema12: [...], ema24: [...]},
+     *  ... 
+     * }
+     * To get these values, you must get the API data then pass that through the backtester algorithm
+     * Backtester will give you all the values you will need to display, memoize this stuff
+     */
+    //backtester()
+
+  }, [APIData])
+
+  // Helper Functions
+  // ----------------
+
+  // Get the stock data for one period
+  const getPeriod = async (ticker, period, interval) => {
+    const form = { ticker, interval, period }
+    const response = await getChartData(form)
+    //const data = response.data.chart.result[0].indicators.quote[0].close
+    console.log(response)
+    setAPIData({ ...APIData, [period]: response })
+  }
+
+  // Rename backtester function
+  const backtester = conservativeMomentumBacktesterFunction
+
+  /**
+   * onPageLoad :
+   *  ~get all the period stock data and store values in APIData
+   *  (let memo run)
+   *  display visible period in line chart (Set the data so Line chart can display it)
+   *  
+   * when APIData is changed:
+   *  memoize the values and calculate the EMA values and store them too
+   * 
+   * onPeriodChange :
+   *  if there is data in the memo for this period, display it
+   *  else fetch the data and use that data, if you can't display error fetching data
+   * 
+   * onSubmit:
+   *  get all the period stock data and store values in APIData
+   *  (let memo run)
+   *  display visible period in line chart
+   */
+
+  // Hooks
+  // ----------------
 
   // Get Default values for chart on page load
   useLayoutEffect(() => {
-    
-    const getPeriod = async (ticker, period, interval) => {
-      const form = { ticker, interval, period };
-      const response = await getChartData(form);
-      const data = response.data.chart.result[0].indicators.adjclose[0].adjclose;
-      setAPIData({ ...APIData, [period]: data })
-      console.log(APIData)
-    }
+    // Get the stock data for all periods
+    getPeriod(formValues["ticker"], ONE_DAY, defaultStockIntervals[ONE_DAY])
     /*
-    for (let period of Object.keys(defaultStockIntervals)){
-      getPeriod(formValues["ticker"], period, defaultStockIntervals[period]);
+    for (let period of Object.keys(defaultStockIntervals)) { 
+      getPeriod(formValues["ticker"], period, defaultStockIntervals[period]) 
     }
     */
     
-    
-   getPeriod(formValues["ticker"], ONE_DAY, defaultStockIntervals[ONE_DAY])
-   
+    // Set the chart range to match visible period length
+    setChartRange(APIData[HighlightedPeriod].length)
   }, [])
-
-  const chartDataMemo = useMemo(() => {
-  }, [APIData])
 
   // OnPeriod Change, after first mount
   const periodListJustMounted = useRef(true)

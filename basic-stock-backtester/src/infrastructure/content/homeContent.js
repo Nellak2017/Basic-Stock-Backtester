@@ -188,6 +188,26 @@ export const defaultAPIData = {
 }
 //[ALL]: []
 
+export const defaultFormValues = {
+    "ticker": DEFAULT_TICKER,
+    "interval": ONE_MINUTE,
+    "upperSell": UPPER_SELL,
+    "lowerSell": LOWER_SELL,
+    "initHolding": INIT_HOLDING,
+    "strategy": STRATEGY,
+    "lowerIndicator": EMA_LOWER_INDICATOR,
+    'upperIndicator': EMA_UPPER_INDICATOR
+}
+
+export const defaultDisplayed = {
+    [ONE_DAY]: {"values": [], "ema12": [], "ema24": []},
+    [ONE_WEEK]: {"values": [], "ema12": [], "ema24": []},
+    [ONE_MONTH]: {"values": [], "ema12": [], "ema24": []},
+    [THREE_MONTHS]: {"values": [], "ema12": [], "ema24": []},
+    [ONE_YEAR]: {"values": [], "ema12": [], "ema24": []},
+    [FIVE_YEARS]: {"values": [], "ema12": [], "ema24": []},
+}
+
 export const defaultStock = {
     "ticker": DEFAULT_TICKER,
     "interval": ONE_MINUTE,

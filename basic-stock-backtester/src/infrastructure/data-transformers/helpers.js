@@ -102,12 +102,13 @@ export const getDefaultChartData = ({individualStock=defaultStock, retries=DEFAU
     return {"individualStock":individualStock, "retries":retries, "availablePeriods":availablePeriods}
 }
 
-export const load = (period) => {
-
-}
-
-export const defaultLoad = () => {
-
+export const toBacktesterInput = (APIData) => {
+    return [
+        {'ticker': 'TSLA', 'date': '2022:04:30 00:00:00', 'value': 2815.533447265625}, 
+        {'ticker': 'TSLA', 'date': '2022:05:01 00:00:00', 'value': 2729.994140625}, 
+        {'ticker': 'TSLA', 'date': '2022:05:02 00:00:00', 'value': 2827.614013671875}, 
+        {'ticker': 'TSLA', 'date': '2022:05:03 00:00:00', 'value': 2857.15234375}
+    ]
 }
 
 export const chartData = (dataSetLabels, labels, data, colors) => {
