@@ -27,3 +27,7 @@ export const EMA_UPPER_INDICATOR = "EMA-12"
 
 export const DEFAULT_RETRIES = 10
 export const DATE_FORMAT = "YYYY:MM:DD HH:mm:ss"
+
+export const MATCH_FLOAT = /(^[-+]?\d+$)|([0-9]*\.[0-9]+)/i
+export const MATCH_TICKER = /^[a-zA-Z]{2,5}$/i
+export const MATCH_DATETIME = /\d\d[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\s[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?/i
