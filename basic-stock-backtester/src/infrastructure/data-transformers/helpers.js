@@ -5,13 +5,19 @@ import {
     DEFAULT_TICKER,
     UPPER_SELL,
     LOWER_SELL,
-    DEFAULT_RETRIES
+    DEFAULT_RETRIES,
+    DATE_FORMAT,
+    MATCH_TICKER,
+    MATCH_DATETIME,
+    MATCH_FLOAT
 } from '../content/constants'
 
 import {
     defaultStockIntervals,
     defaultStock
 } from '../content/homeContent'
+import moment from 'moment';
+
 /**
  * Functions:
  * 
@@ -97,18 +103,43 @@ export const DTO = (period, interval, formValues) => {
     }
 }
 
-export const getDefaultChartData = ({individualStock=defaultStock, retries=DEFAULT_RETRIES, availablePeriods=defaultStockIntervals} = {}) => {
+export const getDefaultChartData = ({ individualStock = defaultStock, retries = DEFAULT_RETRIES, availablePeriods = defaultStockIntervals } = {}) => {
     // pass in "1D" as visiblePeriod, 5 retries as standard
-    return {"individualStock":individualStock, "retries":retries, "availablePeriods":availablePeriods}
+    return { "individualStock": individualStock, "retries": retries, "availablePeriods": availablePeriods }
 }
 
 export const toBacktesterInput = (APIData) => {
-    return [
-        {'ticker': 'TSLA', 'date': '2022:04:30 00:00:00', 'value': 2815.533447265625}, 
-        {'ticker': 'TSLA', 'date': '2022:05:01 00:00:00', 'value': 2729.994140625}, 
-        {'ticker': 'TSLA', 'date': '2022:05:02 00:00:00', 'value': 2827.614013671875}, 
-        {'ticker': 'TSLA', 'date': '2022:05:03 00:00:00', 'value': 2857.15234375}
-    ]
+    // Input Validation
+    // ------------------
+    if (APIData === undefined) throw new Error("All API Data is missing inside of toBacktesterInput function. Ensure API Data passed in is correct.")
+    if (APIData?.chart === undefined) throw new Error("Chart is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
+    if (APIData.chart?.result === undefined) throw new Error("Results are missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
+    if (APIData.chart.result[0]?.meta === undefined) throw new Error("Meta Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
+    if (APIData.chart.result[0]?.timestamp === undefined) throw new Error("Timestamp Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
+    if (APIData.chart.result[0]?.indicators === undefined) throw new Error("Stock Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
+
+    // Variables
+    // ------------------
+    const results = APIData?.chart?.result[0]
+    const ticker = results?.meta?.symbol
+    const unixTimestamps = Object.values(results?.timestamp)
+    const values = Object.values(results?.indicators?.quote[0]?.close)
+
+    // More Input Validation
+    // ------------------
+    if (typeof ticker !== "string" || !MATCH_TICKER.test(ticker)) throw new Error("Invalid Ticker found inside of toBacktesterInput function. Ensure all Tickers are between 2 and 5 characters long and are all strings too.")
+    if (!unixTimestamps.every(timestamp => typeof timestamp === "number" && MATCH_FLOAT.test(timestamp))) throw new Error("Invalid Timestamp found inside of toBacktesterInput function. Ensure all Timestamps are floating point numbers or integers, but not strings or any other type.")
+    if (!values.every(value => typeof value === "number" && MATCH_FLOAT.test(value))) throw new Error("Invalid Stock Value(s) found inside of toBacktesterInput function. Ensure all Timestamps are floating point numbers or integers, but not strings or any other type.")
+
+    // Convert Unix dates to String Formatted Dates
+    // ------------------
+    const formattedDateTimes = unixTimestamps.map(unixDate => moment.unix(unixDate).format(DATE_FORMAT))
+    // Ensure formatted date time has proper format
+    if (formattedDateTimes.every(datetime => typeof datetime === 'string' && MATCH_DATETIME.test(datetime)))
+
+    // Make the list of Objects in the proper format, and return it
+    // ------------------
+    return values.map((value, index) => ({ "ticker": ticker, "date": formattedDateTimes[index], "value": value }))
 }
 
 export const chartData = (dataSetLabels, labels, data, colors) => {
