@@ -1,12 +1,10 @@
 // Step 1 in mocking, import the modules you need
-import axios from 'axios';
-import {
-    getSmaDataPoint
-} from '../backtester-algos/getSma';
-import { areSetsEqual } from '../data-transformers/helpers.js';
+import axios from 'axios'
+import { getSmaDataPoint } from '../backtester-algos/getSma'
+import { areSetsEqual } from '../data-transformers/helpers.js'
 
 // Step 2 in mocking, mock the module.
-jest.mock('axios'); // Replaces all modules inside to do nothing and return undefined
+jest.mock('axios') // Replaces all modules inside to do nothing and return undefined
 
 // Step 3 in mocking, mock the return value of the mocked function. If "mockResolvedValue", it lets you use it multiple times.
 axios.get.mockResolvedValue({
@@ -25,96 +23,83 @@ axios.get.mockResolvedValue({
             ]
         }
     }
-});
+})
 
 describe("getSmaDataPoint should behave correctly", () => {
 
     describe("The function should validate it's parameters", () => {
         // See also: https://github.com/facebook/jest/blob/main/examples/async/__tests__/user.test.js
         // See also: https://jestjs.io/docs/tutorial-async#rejects
-
-        const badTicker = () => getSmaDataPoint(1, "2022:05:04 00:00:00", 24);
-        const badDate = () => getSmaDataPoint("TSLA", "2022:05:04 ", 12);
-        const badDays = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", "12");
+        const badTicker = () => getSmaDataPoint(1, "2022:05:04 00:00:00", 24)
+        const badDate = () => getSmaDataPoint("TSLA", "2022:05:04 ", 12)
+        const badDays = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", "12")
 
         it("should throw an error if ticker is not a string", async () => {
-            expect.assertions(1);
-            return badTicker().catch(e =>
-                expect(e instanceof Error).toBeTruthy()
-            );
+            expect.assertions(1)
+            return badTicker().catch(e =>expect(e instanceof Error).toBeTruthy())
         })
-
         it("should throw an error if date is not a string in the format expected", async () => {
-            expect.assertions(1);
-            return badDate().catch(e =>
-                expect(e instanceof Error).toBeTruthy()
-            );
+            expect.assertions(1)
+            return badDate().catch(e => expect(e instanceof Error).toBeTruthy())
         })
-
         it("should throw an error if days is not an integer", async () => {
-            expect.assertions(1);
-            return badDays().catch(e =>
-                expect(e instanceof Error).toBeTruthy()
-            );
+            expect.assertions(1)
+            return badDays().catch(e => expect(e instanceof Error).toBeTruthy())
         })
     })
 
     describe("The function should return an object with a specific format", () => {
         // See also: https://github.com/facebook/jest/blob/main/examples/async/__tests__/user.test.js
-        const goodKeys = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 24);
-        const expectedKeys = new Set(["ticker", "date", "sma"]);
+        const goodKeys = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 24)
+        const expectedKeys = new Set(["ticker", "date", "sma"])
 
         it("should have only the keys expected", async () => {
-            expect.assertions(1);
-            const data = await goodKeys();
-            expect(areSetsEqual(new Set(Object.keys(data)), expectedKeys)).toBeTruthy();
+            expect.assertions(1)
+            const data = await goodKeys()
+            expect(areSetsEqual(new Set(Object.keys(data)), expectedKeys)).toBeTruthy()
         })
 
         describe("should have values that are the right type and format", () => {
             it("should have valid ticker", async () => {
-                expect.assertions(1);
-                const data = await goodKeys();
-                const ticker = data["ticker"];
-                expect(typeof ticker === 'string' || ticker instanceof String && ticker.length <= 4 && ticker.length > 0).toBeTruthy();
+                expect.assertions(1)
+                const data = await goodKeys()
+                const ticker = data["ticker"]
+                expect(typeof ticker === 'string' || ticker instanceof String && ticker.length <= 4 && ticker.length > 0).toBeTruthy()
             })
-
             it("should have valid date", async () => {
-                expect.assertions(2);
-                const data = await goodKeys();
-                const date = data["date"];
-                expect(typeof date === 'string' || date instanceof String).toBeTruthy();
-                expect(date).toMatch(/[0-9]+:(0?[1-9]|[1][0-2]):(0?[1-9]|[12][0-9]|3[01])\s[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?/);
+                expect.assertions(2)
+                const data = await goodKeys()
+                const date = data["date"]
+                expect(typeof date === 'string' || date instanceof String).toBeTruthy()
+                expect(date).toMatch(/[0-9]+:(0?[1-9]|[1][0-2]):(0?[1-9]|[12][0-9]|3[01])\s[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?/)
             })
-
             it("should have valid sma", async () => {
-                expect.assertions(1);
-                const data = await goodKeys();
-                const sma = data["sma"];
-                expect(typeof sma === 'number' && !isNaN(sma)).toBeTruthy();
+                expect.assertions(1)
+                const data = await goodKeys()
+                const sma = data["sma"]
+                expect(typeof sma === 'number' && !isNaN(sma)).toBeTruthy()
             })
         })
     })
 
     describe("The function should return the average for the stock given the interval and date", () => {
+        const sma24 = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 24)
+        const sma12 = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 12)
 
-        const sma24 = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 24);
-        const sma12 = () => getSmaDataPoint("TSLA", "2022:05:04 00:00:00", 12);
-
-        const sma24AvgValue = 777.555;
-        const sma12AvgValue = 795.397;
-
+        const sma24AvgValue = 777.555
+        const sma12AvgValue = 795.397
+        
         it("should have correct SMA 24 for mocked API response", async () => {
-            expect.assertions(1);
-            const data = await sma24();
-            const sma = data["sma"];
-            expect(sma).toBeCloseTo(sma24AvgValue);
+            expect.assertions(1)
+            const data = await sma24()
+            const sma = data["sma"]
+            expect(sma).toBeCloseTo(sma24AvgValue)
         })
         it("should have correct SMA 12 for mocked API response", async () => {
-            expect.assertions(1);
-            const data = await sma12();
-            const sma = data["sma"];
-            expect(sma).toBeCloseTo(sma12AvgValue);
+            expect.assertions(1)
+            const data = await sma12()
+            const sma = data["sma"]
+            expect(sma).toBeCloseTo(sma12AvgValue)
         })
     })
-
 })

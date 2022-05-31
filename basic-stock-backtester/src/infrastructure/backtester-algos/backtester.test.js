@@ -2,7 +2,8 @@ import {
     conservativeMomentumStrategyEvaluationFunction,
     ema,
     conservativeMomentumBacktesterFunction
-} from '../backtester-algos/backtester';
+} from '../backtester-algos/backtester'
+import { UPPER_SELL, LOWER_SELL } from "../content/constants"
 
 describe("conservativeMomentumStrategyEvaluationFunction should behave correctly", () => {
 
@@ -15,7 +16,7 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
         "ema12_2": 625,
         "stock_holding": true,
         "buy_point": 575
-    };
+    }
     const badBuyDataPoint = {
         "value_1": 630,
         "value_2": 632,
@@ -25,47 +26,26 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
         "ema12_2": 625,
         "stock_holding": true,
         "buy_point": "575"
-    };
-    const upperSell = 1.1;
-    const lowerSell = .95;
-    const goodStrategy = () => conservativeMomentumStrategyEvaluationFunction(dataPoint, upperSell, lowerSell);
-    const badDataPoint = () => conservativeMomentumStrategyEvaluationFunction([], upperSell, lowerSell);
-    const invalidDataPoint = () => conservativeMomentumStrategyEvaluationFunction(badBuyDataPoint, upperSell, lowerSell);
-    const badUpperSell = () => conservativeMomentumStrategyEvaluationFunction(dataPoint, "123", lowerSell);
-    const badLowerSell = () => conservativeMomentumStrategyEvaluationFunction(dataPoint, upperSell, "123");
+    }
+    const goodStrategy = () => conservativeMomentumStrategyEvaluationFunction(dataPoint, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
+    const badDataPoint = () => conservativeMomentumStrategyEvaluationFunction([], parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
+    const invalidDataPoint = () => conservativeMomentumStrategyEvaluationFunction(badBuyDataPoint, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
+    const badUpperSell = () => conservativeMomentumStrategyEvaluationFunction(dataPoint, "123", parseFloat(LOWER_SELL))
+    const badLowerSell = () => conservativeMomentumStrategyEvaluationFunction(dataPoint, parseFloat(UPPER_SELL), "123")
 
     describe("The function should validate it's parameters", () => {
-
-        it("should throw an error if dataPoint has invalid keys", () => {
-            expect(badDataPoint).toThrow(Error);
-        })
-
-        it("should throw an error if the values of dataPoint are not numbers, execept for stock_holding", () => {
-            expect(invalidDataPoint).toThrow(Error);
-        })
-
-        it("should throw an error if given a bad upperSell", () => {
-            expect(badUpperSell).toThrow(Error);
-        })
-
-        it("should throw an error if given a bad lowerSell", () => {
-            expect(badLowerSell).toThrow(Error);
-        })
-
-        it("should not throw an error if given a valid input", () => {
-            expect(goodStrategy).not.toThrow(Error);
-        })
-
-    });
+        it("should throw an error if dataPoint has invalid keys", () => expect(badDataPoint).toThrow(Error))
+        it("should throw an error if the values of dataPoint are not numbers, execept for stock_holding", () => expect(invalidDataPoint).toThrow(Error))
+        it("should throw an error if given a bad upperSell", () => expect(badUpperSell).toThrow(Error))
+        it("should throw an error if given a bad lowerSell", () => expect(badLowerSell).toThrow(Error))
+        it("should not throw an error if given a valid input", () => expect(goodStrategy).not.toThrow(Error))
+    })
 
     describe("The function should return an evaulation string that is one of only a few enum values", () => {
-        it("should have a return value in the set {'BUY','SELL','HOLD'}", () => {
-            expect(goodStrategy()).toMatch(/BUY|SELL|HOLD/)
-        })
-    });
+        it("should have a return value in the set {'BUY','SELL','HOLD'}", () => expect(goodStrategy()).toMatch(/BUY|SELL|HOLD/))
+    })
 
     describe("The function should return the correct evaluation for the stock", () => {
-
         it("should return BUY when not holding and ema is increasing ", () => {
             const notHoldingEmaIncreasingNotDoublePos = {
                 "value_1": 630,
@@ -76,8 +56,8 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
                 "ema12_2": 650,
                 "stock_holding": false,
                 "buy_point": 575
-            };
-            expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaIncreasingNotDoublePos, upperSell, lowerSell)).toMatch(/BUY/);
+            }
+            expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaIncreasingNotDoublePos, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))).toMatch(/BUY/)
         })
 
         it("should return BUY when not holding and ema is double positive ", () => {
@@ -90,12 +70,12 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
                 "ema12_2": 625,
                 "stock_holding": false,
                 "buy_point": 575
-            };
-            expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaIncreasingDoublePos, upperSell, lowerSell)).toMatch(/BUY/);
+            }
+            expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaIncreasingDoublePos, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))).toMatch(/BUY/)
         })
 
         it("should return SELL when holding and v2 >= top", () => {
-            // value 2 > upperSell * buy_point === 633 > 632.5
+            // value 2 > UPPER_SELL * buy_point === 633 > 632.5
             const HoldingAndV2MoreThanTop = {
                 "value_1": 630,
                 "value_2": 633,
@@ -105,12 +85,12 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
                 "ema12_2": 650,
                 "stock_holding": true,
                 "buy_point": 575
-            };
-            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndV2MoreThanTop, upperSell, lowerSell)).toMatch(/SELL/);
+            }
+            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndV2MoreThanTop, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))).toMatch(/SELL/)
         })
 
         it("should return SELL when holding and v2 <= bottom", () => {
-            // value 2 < lowerSell * buy_point ===  545 < 546.25
+            // value 2 < LOWER_SELL * buy_point ===  545 < 546.25
             const HoldingAndV2LessThanBottom = {
                 "value_1": 630,
                 "value_2": 545,
@@ -120,8 +100,8 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
                 "ema12_2": 650,
                 "stock_holding": true,
                 "buy_point": 575
-            };
-            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndV2LessThanBottom, upperSell, lowerSell)).toMatch(/SELL/);
+            }
+            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndV2LessThanBottom, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))).toMatch(/SELL/)
         })
 
         it("should return SELL when holding and ema_decreasing ", () => {
@@ -136,8 +116,8 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
                 "ema12_2": 605,
                 "stock_holding": true,
                 "buy_point": 575
-            };
-            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndV2EmaDecreasing, upperSell, lowerSell)).toMatch(/SELL/);
+            }
+            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndV2EmaDecreasing, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))).toMatch(/SELL/)
         })
 
         it("should return SELL when holding ema_double_negative", () => {
@@ -158,8 +138,8 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
                 "ema12_2": 605,
                 "stock_holding": true,
                 "buy_point": 575
-            };
-            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndEmaDoubleNegative, upperSell, lowerSell)).toMatch(/SELL/);
+            }
+            expect(conservativeMomentumStrategyEvaluationFunction(HoldingAndEmaDoubleNegative, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))).toMatch(/SELL/)
         })
 
         describe("should hold when not BUY or SELL", () => {
@@ -173,8 +153,8 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
                     "ema12_2": 605,
                     "stock_holding": false,
                     "buy_point": 575
-                };
-                expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaDoubleNegative, upperSell, lowerSell)).toMatch(/HOLD/);
+                }
+                expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaDoubleNegative, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))).toMatch(/HOLD/)
             })
 
             it("should hold when holding stock and ema is decreasing", () => {
@@ -195,8 +175,8 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
                     "ema12_2": 605,
                     "stock_holding": false,
                     "buy_point": 575
-                };
-                expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaDecreasing, upperSell, lowerSell)).toMatch(/HOLD/);
+                }
+                expect(conservativeMomentumStrategyEvaluationFunction(notHoldingEmaDecreasing, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))).toMatch(/HOLD/)
             })
 
             it("should hold when holding stock and ema is increasing", () => {
@@ -209,11 +189,11 @@ describe("conservativeMomentumStrategyEvaluationFunction should behave correctly
                     "ema12_2": 650,
                     "stock_holding": true,
                     "buy_point": 575
-                };
-                expect(conservativeMomentumStrategyEvaluationFunction(holdingEmaIncreasingNotDoublePos, upperSell, lowerSell)).toMatch(/HOLD/);
+                }
+                expect(conservativeMomentumStrategyEvaluationFunction(holdingEmaIncreasingNotDoublePos, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))).toMatch(/HOLD/)
             })
         })
-    });
+    })
 })
 
 describe("Ema returns correct values", () => {
@@ -231,7 +211,6 @@ describe("Ema returns correct values", () => {
     const badEMA4 = () => ema(2685.78, 713.989990234375, 6, {})
 
     describe("should validate input", () => {
-
         it("should not throw an error if smoothing is undefined", () => {
             expect(typeof goodEMA1U === "number" && !isNaN(goodEMA1U)).toBeTruthy()
             expect(typeof goodEMA2U === "number" && !isNaN(goodEMA2U)).toBeTruthy()
@@ -242,31 +221,16 @@ describe("Ema returns correct values", () => {
             expect(goodEMA2U).toBe(goodEMA2)
             expect(goodEMA3U).toBe(goodEMA3)
         })
-        it("should throw an error if prevEma is bad", () => {
-            expect(badEMA1).toThrow(Error)
-        })
-        it("should throw an error if dataPoint is bad", () => {
-            expect(badEMA2).toThrow(Error)
-        })
-        it("should throw an error if days is bad", () => {
-            expect(badEMA3).toThrow(Error)
-        })
-        it("should throw an error if smoothing is bad", () => {
-            expect(badEMA4).toThrow(Error)
-        })
-
+        it("should throw an error if prevEma is bad", () => expect(badEMA1).toThrow(Error))
+        it("should throw an error if dataPoint is bad", () => expect(badEMA2).toThrow(Error))
+        it("should throw an error if days is bad", () => expect(badEMA3).toThrow(Error))
+        it("should throw an error if smoothing is bad", () => expect(badEMA4).toThrow(Error))
     })
 
     describe("should return correct ema values", () => {
-        it("should return 2528.0367... for (2685.78, 713.989990234375, 24) input", () => {
-            expect(goodEMA1).toBeCloseTo(2528.0367992187503)
-        })
-        it("should return 2382.4276... for (2685.78, 713.989990234375, 12) input", () => {
-            expect(goodEMA2).toBeCloseTo(2382.4276908052884)
-        })
-        it("should return 2122.4114... for (2685.78, 713.989990234375, 6) input", () => {
-            expect(goodEMA3).toBeCloseTo(2122.4114257812503)
-        })
+        it("should return 2528.0367... for (2685.78, 713.989990234375, 24) input", () => expect(goodEMA1).toBeCloseTo(2528.0367992187503))
+        it("should return 2382.4276... for (2685.78, 713.989990234375, 12) input", () => expect(goodEMA2).toBeCloseTo(2382.4276908052884))
+        it("should return 2122.4114... for (2685.78, 713.989990234375, 6) input", () => expect(goodEMA3).toBeCloseTo(2122.4114257812503))
     })
 })
 
@@ -277,96 +241,66 @@ describe("conservativeMomentumBacktesterFunction should behave correctly", () =>
             { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': 655.02001953125 },
             { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': 653.530029296875 },
             { 'ticker': 'TSLA', 'date': '2022:05:25 00:00:00', 'value': 623.8499755859375 }
-        ];
+        ]
         const badValueDataSet1 = [
             { 'ticker': 'TSLA', 'date': '2022:05:20 00:00:00', 'value': "713.989990234375" },
             { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': "655.02001953125" },
             { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': "653.530029296875" },
             { 'ticker': 'TSLA', 'date': '2022:05:25 00:00:00', 'value': "623.8499755859375" }
-        ];
+        ]
         const badValueDataSet2 = [
             { 'ticker': 'TSLA', 'date': '2022', 'value': "713.989990234375" },
             { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': "655.02001953125" },
             { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': "653.530029296875" },
             { 'ticker': 'TSLA', 'date': '2022', 'value': "623.8499755859375" }
-        ];
+        ]
         const badValueDataSet3 = [
             { 'ticker': 'TSLAAA', 'date': '2022:05:20 00:00:00', 'value': "713.989990234375" },
             { 'ticker': 123, 'date': '2022:05:23 00:00:00', 'value': "655.02001953125" },
             { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': "653.530029296875" },
             { 'ticker': 'TSLA', 'date': '2022:05:25 00:00:00', 'value': NaN }
-        ];
-        const initSMA24 = 2685.78;
-        const initSMA12 = 3029.18;
-        const initiallyHolding = false;
-        const upperSell = 1.1;
-        const lowerSell = .95;
+        ]
+        const initSMA24 = 2685.78
+        const initSMA12 = 3029.18
+        const initiallyHolding = false
 
         const goodBacktest = () => conservativeMomentumBacktesterFunction(dataSet, initSMA24, initSMA12, initiallyHolding,
-            upperSell, lowerSell);
+            parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
         const badDatasetValuesBacktest1 = () => conservativeMomentumBacktesterFunction(badValueDataSet1, initSMA24, initSMA12, initiallyHolding,
-            upperSell, lowerSell);
+            parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
         const badDatasetValuesBacktest2 = () => conservativeMomentumBacktesterFunction(badValueDataSet2, initSMA24, initSMA12, initiallyHolding,
-            upperSell, lowerSell);
+            parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
         const badDatasetValuesBacktest3 = () => conservativeMomentumBacktesterFunction(badValueDataSet3, initSMA24, initSMA12, initiallyHolding,
-            upperSell, lowerSell);
+            parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
         const badDatasetBacktest = () => conservativeMomentumBacktesterFunction({}, initSMA24, initSMA12, initiallyHolding,
-            upperSell, lowerSell);
+            parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
         const badSMABacktest = () => conservativeMomentumBacktesterFunction(dataSet, "initSMA24", initSMA12, initiallyHolding,
-            upperSell, lowerSell);
+            parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
         const badHoldingBacktest = () => conservativeMomentumBacktesterFunction(dataSet, initSMA24, initSMA12, "initiallyHolding",
-            upperSell, lowerSell);
+            parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
         const badSellBacktest = () => conservativeMomentumBacktesterFunction(dataSet, initSMA24, initSMA12, initiallyHolding,
-            "upperSell", lowerSell);
+            "upperSell", parseFloat(LOWER_SELL))
 
         describe("should throw an error if the values of the dataset are not of the right type", () => {
             it("should have string type for all values except for the value, which is number", () => {
-                expect(badDatasetValuesBacktest1).toThrow(Error);
-                expect(badDatasetValuesBacktest2).toThrow(Error);
-                expect(badDatasetValuesBacktest3).toThrow(Error);
+                expect(badDatasetValuesBacktest1).toThrow(Error)
+                expect(badDatasetValuesBacktest2).toThrow(Error)
+                expect(badDatasetValuesBacktest3).toThrow(Error)
             })
         })
 
-        it("should not throw an error if the function arguments are correct", () => {
-            expect(goodBacktest).not.toThrow(Error);
-        })
-        it("should throw an error if dataSet is bad", () => {
-            expect(badDatasetBacktest).toThrow(Error);
-        })
-        it("should throw an error if initSMA is bad", () => {
-            expect(badSMABacktest).toThrow(Error);
-        })
-        it("should throw an error if initiallyHolding is bad", () => {
-            expect(badHoldingBacktest).toThrow(Error);
-        })
-        it("should throw an error if Sell is bad", () => {
-            expect(badSellBacktest).toThrow(Error);
-        })
+        it("should not throw an error if the function arguments are correct", () => expect(goodBacktest).not.toThrow(Error))
+        it("should throw an error if dataSet is bad", () => expect(badDatasetBacktest).toThrow(Error))
+        it("should throw an error if initSMA is bad", () => expect(badSMABacktest).toThrow(Error))
+        it("should throw an error if initiallyHolding is bad", () => expect(badHoldingBacktest).toThrow(Error))
+        it("should throw an error if Sell is bad", () => expect(badSellBacktest).toThrow(Error))
     })
-
-    /*
-    describe("The function should return a list of dictionaries that have the right values", () => {
-        it("should throw an error if the ticker is not valid for any dict in the data set", () => {
-
-        });
-
-        it("should throw an error if the date is not valid for any dict in the data set", () => {
-
-        });
-
-        it("should throw an error if the value is not valid for any dict in the data set", () => {
-
-        });
-    })
-    */
 
     describe("The function should return the right backtest for a stock", () => {
         // other input variables
-        const initSMA24 = 2685.78;
-        const initSMA12 = 3029.18;
-        const initHolding = false;
-        const upperSell = 1.1;
-        const lowerSell = .95;
+        const initSMA24 = 2685.78
+        const initSMA12 = 3029.18
+        const initHolding = false
 
         // input
         const goodInput1 = [
@@ -452,39 +386,29 @@ describe("conservativeMomentumBacktesterFunction should behave correctly", () =>
         ]
 
         const backtested = conservativeMomentumBacktesterFunction(
-            goodInput1, initSMA24, initSMA12, initHolding, upperSell, lowerSell)
-
+            goodInput1, initSMA24, initSMA12, initHolding, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
         const backtested2 = conservativeMomentumBacktesterFunction(
-            goodInput2, initSMA24, initSMA12, initHolding, upperSell, lowerSell)
+            goodInput2, initSMA24, initSMA12, initHolding, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
 
-        it("should match the test case array length for (TSLA, 1D, 1wk) (as of May 29 2022)", () => {
-            expect(backtested.length).toBe(goodOutput1.length);
-        })
-
+        it("should match the test case array length for (TSLA, 1D, 1wk) (as of May 29 2022)", () => expect(backtested.length).toBe(goodOutput1.length))
         it("should match test case for API data (TSLA, 1D, 1wk) (as of May 29 2022)", () => {
-            expect(backtested).toEqual(goodOutput1);
-            expect(backtested).not.toEqual(badOutput1);
+            expect(backtested).toEqual(goodOutput1)
+            expect(backtested).not.toEqual(badOutput1)
         })
-
-        it("should match the test case array length for (ETH-USD, 1D, 1mo) (as of May 29 2022)", () => {
-            expect(backtested2.length).toBe(goodOutput2.length);
-        })
-
+        it("should match the test case array length for (ETH-USD, 1D, 1mo) (as of May 29 2022)", () => expect(backtested2.length).toBe(goodOutput2.length))
         it("should match test case for API data (ETH-USD, 1D, 1mo) (as of May 29 2022)", () => {
-            expect(backtested2).toEqual(goodOutput2);
-            expect(backtested2).not.toEqual(badOutput1);
+            expect(backtested2).toEqual(goodOutput2)
+            expect(backtested2).not.toEqual(badOutput1)
         })
     })
 
     describe("The function should be performant", () => {
         it("should not take more than 100ms to complete", () => {
             // other input variables
-            const initSMA24 = 2685.78;
-            const initSMA12 = 3029.18;
-            const initHolding = false;
-            const upperSell = 1.1;
-            const lowerSell = .95;
-
+            const initSMA24 = 2685.78
+            const initSMA12 = 3029.18
+            const initHolding = false
+            
             // input
             const goodInput1 = [
                 { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': 655.02001953125 },
@@ -495,7 +419,7 @@ describe("conservativeMomentumBacktesterFunction should behave correctly", () =>
             ] // (TSLA, 1D, 1wk) (as of May 29 2022)
 
             const t0 = performance.now()
-            conservativeMomentumBacktesterFunction(goodInput1, initSMA24, initSMA12, initHolding, upperSell, lowerSell)
+            conservativeMomentumBacktesterFunction(goodInput1, initSMA24, initSMA12, initHolding, parseFloat(UPPER_SELL), parseFloat(LOWER_SELL))
             const t1 = performance.now()
             expect(t1 - t0).toBeLessThan(100)
         })

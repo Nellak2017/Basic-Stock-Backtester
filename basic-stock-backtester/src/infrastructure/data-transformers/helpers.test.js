@@ -1,127 +1,53 @@
-import {
-    range,
-    areSetsEqual,
-    daysInterval,
-    randomColor,
-    extractData,
-    DTO,
-    toBacktesterInput,
-    getDefaultChartData,
-    load,
-    defaultLoad
-} from './helpers';
-
-import {
-    ONE_DAY,
-    ONE_WEEK,
-    ONE_MONTH,
-    THREE_MONTHS,
-    ONE_YEAR,
-    FIVE_YEARS,
-    ALL,
-    ONE_MINUTE,
-    TWO_MINUTES,
-    FIVE_MINUTES,
-    FIFTEEN_MINUTES,
-    THIRTY_MINUTES,
-    NINETY_MINUTES,
-    ONE_HOUR,
-    FIVE_DAYS,
-    DEFAULT_TICKER,
-    UPPER_SELL,
-    LOWER_SELL,
-    INIT_HOLDING,
-    STRATEGY,
-    EMA_LOWER_INDICATOR,
-    EMA_UPPER_INDICATOR,
-    DEFAULT_RETRIES,
-    DATE_FORMAT
-} from '../content/constants'
-
-import {
-    defaultStockIntervals,
-    defaultStock,
-    defaultResData
-} from '../content/homeContent'
-
+import * as helpers from './helpers'
+import * as CONSTANTS from '../content/constants'
+import * as content from '../content/homeContent'
 import { getChartData } from '../api/chartData'
-import axios from 'axios';
-import ReactDom from 'react-dom';
-import { render } from '@testing-library/react';
-import moment from 'moment';
+import axios from 'axios'
+import moment from 'moment'
 
+jest.mock('axios')
 
-jest.mock('axios');
-
-
-/**
- * TODO: FIX THE API TESTING, IT IS NOT DESIGNED TO WORK WITH .THEN SYNTAX
- * TODO: LEARN HOW TO TEST IF API RETRIES OR NOT
- * TODO: LEARN HOW TO TEST USESTATE/USEMEMO HOOK (LIKE IF IT IS BEING UPDATED WITH PROPER VALUES)
- * TODO: EXTRACT OUT THE API TEST TO THE API FOLDER!! NOT THIS FOLDER
- * TODO: Figure out how to test axios-retry
- */
-
+// @todo: Test Axios Retry
 
 describe('Range function should make a list of numbers from 0 to n-1, like Python range', () => {
-    const rangeArr = range(0, 10)
-    const edge = range(0, 0)
-    const negativeRange = range(-5, 0)
-    const invalidStr = () => { range("0", "0") }
-    const invalidUndef = () => { range("0") }
-    const NANtest = () => { range(NaN, NaN) }
+    const rangeArr = helpers.range(0, 10)
+    const edge = helpers.range(0, 0)
+    const negativeRange = helpers.range(-5, 0)
+    const invalidStr = () => { helpers.range("0", "0") }
+    const invalidUndef = () => { helpers.range("0") }
+    const NANtest = () => { helpers.range(NaN, NaN) }
 
-    test('range("0","0") should throw an error', () => {
-        expect(invalidStr).toThrow(Error); // An Error should be thrown if invalid range params are supplied 
+    it('helpers.range("0","0") should throw an error', () => expect(invalidStr).toThrow(Error))
+    it('helpers.range("0",) should throw an error', () => expect(invalidUndef).toThrow(Error))
+    it('helpers.range(NaN, NaN) should throw an error', () => expect(NANtest).toThrow(Error))
+    it('helpers.range(0,0) should be equal to []', () => expect(edge).toEqual([]))
+    it('helpers.range(0,0) should have 0 length', () => expect(edge.length).toBe(0))
+    it('helpers.range(a,b) should have first element a', () => {
+        expect(rangeArr[0]).toBe(0) 
+        expect(negativeRange[0]).toBe(-5) 
     })
-
-    test('range("0",) should throw an error', () => {
-        expect(invalidUndef).toThrow(Error); // An Error should be thrown if invalid range params are supplied 
+    it('helpers.range(a,b) should have last element b', () => {
+        expect(rangeArr[9]).toBe(9) 
+        expect(negativeRange[4]).toBe(-1) 
     })
-
-    test('range(NaN, NaN) should throw an error', () => {
-        expect(NANtest).toThrow(Error); // An Error should be thrown if invalid range params are supplied 
+    it('helpers.range(a,b) should have length b', () => {
+        expect(rangeArr.length).toBe(10) 
+        expect(negativeRange.length).toBe(5) 
     })
-
-    test('range(0,0) should be equal to []', () => {
-        expect(edge).toEqual([]); // Array should be [] 
+    it('helpers.range(a,b) should have sum equal to n(n-1)/2', () => {
+        expect(rangeArr.reduce((a, b) => a + b)).toBe((10 * 9) / 2) 
+        expect(negativeRange.reduce((a, b) => a + b)).toBe(-15) 
     })
-
-    test('range(0,0) should have 0 length', () => {
-        expect(edge.length).toBe(0); // Len should be n
+    it('helpers.range(a,b) should be a strictly increasing list', () => {
+        expect(!!rangeArr.reduce((a, b) => a < b ? b : -1)).toBeTruthy()
+        expect(!!negativeRange.reduce((a, b) => a < b ? b : 1)).toBeTruthy() 
     })
-
-    test('range(a,b) should have first element a', () => {
-        expect(rangeArr[0]).toBe(0); // First element should be 0
-        expect(negativeRange[0]).toBe(-5); // First element should be -5
-    })
-
-    test('range(a,b) should have last element b', () => {
-        expect(rangeArr[9]).toBe(9); // Last element should be n-1
-        expect(negativeRange[4]).toBe(-1); // Last element should be n-1
-    })
-
-    test('range(a,b) should have length b', () => {
-        expect(rangeArr.length).toBe(10); // Len should be n
-        expect(negativeRange.length).toBe(5); // Len should be n
-    })
-
-    test('range(a,b) should have sum equal to n(n-1)/2', () => {
-        expect(rangeArr.reduce((a, b) => a + b)).toBe((10 * 9) / 2); // Sum should be n(n-1)/2
-        expect(negativeRange.reduce((a, b) => a + b)).toBe(-15); // Sum should be n(n-1)/2
-    })
-
-    test('range(a,b) should be a strictly increasing list', () => {
-        expect(!!rangeArr.reduce((a, b) => a < b ? b : -1)).toBeTruthy(); // List should be strictly increasing
-        expect(!!negativeRange.reduce((a, b) => a < b ? b : 1)).toBeTruthy(); // List should be strictly increasing
-    })
-
-});
+})
 
 describe('getDefaultChartData should try to get all the stock period chart data from the API', () => {
-    const dummy_stock = defaultStock
-    const dummy_available = defaultStockIntervals
-    const dummy_retries = DEFAULT_RETRIES
+    const dummy_stock = content.defaultStock
+    const dummy_available = content.defaultStockIntervals
+    const dummy_retries = CONSTANTS.DEFAULT_RETRIES
     const dummy_stock_bad_values = {
         "ticker_": "ETH-USD",
         "interval_": "1M",
@@ -133,34 +59,12 @@ describe('getDefaultChartData should try to get all the stock period chart data 
         "upperIndicator_": "EMA-12",
         "period_": "1D",
     }
-    const dummy_available_bad_values = {
-        ONE_DAY: 1,
-        ONE_WEEK: FIVE_MINUTES,
-        ONE_MONTH: FIFTEEN_MINUTES,
-        THREE_MONTHS: ONE_HOUR,
-        ONE_YEAR: ONE_DAY,
-        FIVE_YEARS: ONE_WEEK,
-        ALL: ONE_MONTH
-    }
-    const dummy_function_call = () => {
-        getDefaultChartData(
-            {
-                individualStock: dummy_stock,
-                visiblePeriod: ONE_DAY,
-                retries: 5,
-                availablePeriods: dummy_available
-            }
-        )
-    };
-    const dummy_default_function_call = () => { getDefaultChartData() }
-
     const good_dummystock_keys = Object.keys(dummy_stock)
     const bad_dummystock_keys = Object.keys(dummy_stock_bad_values)
     const good_dummystock_values = Object.values(dummy_stock)
     const bad_dummystock_values = Object.values(dummy_stock_bad_values)
 
     const good_dummy_available_keys = Object.keys(dummy_available)
-    const bad_dummy_available_keys = Object.keys(dummy_available_bad_values)
     const good_dummy_available_values = Object.values(dummy_stock)
     const bad_dummy_available_values = Object.values(dummy_stock_bad_values)
 
@@ -386,139 +290,104 @@ describe('getDefaultChartData should try to get all the stock period chart data 
                 }
             ]
         }
-    }; // dummy values given: ticker = 'TSLA', period = 1w , interval = 1d
+    } // dummy values given: ticker = 'TSLA', period = 1w , interval = 1d
 
     // IndividualStock Tests
     describe('parameter individualStock is type [{string:string}] with keys: [ticker, interval, upperSell, lowerSell, ...] and uses valid Default values', () => {
-
-        test('individualStock has all keys of type string', () => {
-            expect(good_dummystock_keys.every((e) => { return typeof e === "string" })).toBeTruthy();
+        it('individualStock has all keys of type string', () => expect(good_dummystock_keys.every((e) => { return typeof e === "string" })).toBeTruthy())
+        it('individualStock has all values of type string', () => {
+            expect(good_dummystock_values.every((e) => { return typeof e === "string" })).toBeTruthy()
+            expect(bad_dummystock_values.every((e) => { return typeof e === "string" })).toBeFalsy()
         })
-
-        test('individualStock has all values of type string', () => {
-            expect(good_dummystock_values.every((e) => { return typeof e === "string" })).toBeTruthy();
-            expect(bad_dummystock_values.every((e) => { return typeof e === "string" })).toBeFalsy();
+        it('individualStock has key ticker', () => {
+            expect(good_dummystock_keys.includes("ticker")).toBeTruthy()
+            expect(bad_dummystock_keys.includes("ticker")).toBeFalsy()
         })
-
-        test('individualStock keys have valid default values defined', () => {
-            //expect(getDefaultChartData()).toEqual({"individualStock":defaultStock, "retries":DEFAULT_RETRIES, "availablePeriods":defaultStockIntervals})
+        it('individualStock has key interval', () => {
+            expect(good_dummystock_keys.includes("interval")).toBeTruthy()
+            expect(bad_dummystock_keys.includes("interval")).toBeFalsy()
         })
-
-        test('individualStock has key ticker', () => {
-            expect(good_dummystock_keys.includes("ticker")).toBeTruthy();
-            expect(bad_dummystock_keys.includes("ticker")).toBeFalsy();
+        it('individualStock has key upperSell', () => {
+            expect(good_dummystock_keys.includes("upperSell")).toBeTruthy()
+            expect(bad_dummystock_keys.includes("upperSell")).toBeFalsy()
         })
-
-        test('individualStock has key interval', () => {
-            expect(good_dummystock_keys.includes("interval")).toBeTruthy();
-            expect(bad_dummystock_keys.includes("interval")).toBeFalsy();
+        it('individualStock has key lowerSell', () => {
+            expect(good_dummystock_keys.includes("lowerSell")).toBeTruthy()
+            expect(bad_dummystock_keys.includes("lowerSell")).toBeFalsy()
         })
-
-        test('individualStock has key upperSell', () => {
-            expect(good_dummystock_keys.includes("upperSell")).toBeTruthy();
-            expect(bad_dummystock_keys.includes("upperSell")).toBeFalsy();
+        it('individualStock has key initHolding', () => {
+            expect(good_dummystock_keys.includes("initHolding")).toBeTruthy()
+            expect(bad_dummystock_keys.includes("initHolding")).toBeFalsy()
         })
-
-        test('individualStock has key lowerSell', () => {
-            expect(good_dummystock_keys.includes("lowerSell")).toBeTruthy();
-            expect(bad_dummystock_keys.includes("lowerSell")).toBeFalsy();
+        it('individualStock has key strategy', () => {
+            expect(good_dummystock_keys.includes("strategy")).toBeTruthy()
+            expect(bad_dummystock_keys.includes("strategy")).toBeFalsy()
         })
-
-        test('individualStock has key initHolding', () => {
-            expect(good_dummystock_keys.includes("initHolding")).toBeTruthy();
-            expect(bad_dummystock_keys.includes("initHolding")).toBeFalsy();
+        it('individualStock has key lowerIndicator', () => {
+            expect(good_dummystock_keys.includes("lowerIndicator")).toBeTruthy()
+            expect(bad_dummystock_keys.includes("lowerIndicator")).toBeFalsy()
         })
-
-        test('individualStock has key strategy', () => {
-            expect(good_dummystock_keys.includes("strategy")).toBeTruthy();
-            expect(bad_dummystock_keys.includes("strategy")).toBeFalsy();
+        it('individualStock has key upperIndicator', () => {
+            expect(good_dummystock_keys.includes("upperIndicator")).toBeTruthy()
+            expect(bad_dummystock_keys.includes("upperIndicator")).toBeFalsy()
         })
-
-        test('individualStock has key lowerIndicator', () => {
-            expect(good_dummystock_keys.includes("lowerIndicator")).toBeTruthy();
-            expect(bad_dummystock_keys.includes("lowerIndicator")).toBeFalsy();
+        it('individualStock has key period', () => {
+            expect(good_dummystock_keys.includes("period")).toBeTruthy()
+            expect(bad_dummystock_keys.includes("period")).toBeFalsy()
         })
-
-        test('individualStock has key upperIndicator', () => {
-            expect(good_dummystock_keys.includes("upperIndicator")).toBeTruthy();
-            expect(bad_dummystock_keys.includes("upperIndicator")).toBeFalsy();
-        })
-
-        test('individualStock has key period', () => {
-            expect(good_dummystock_keys.includes("period")).toBeTruthy();
-            expect(bad_dummystock_keys.includes("period")).toBeFalsy();
-        })
-
-        test('individualStock has key interval', () => {
-            expect(good_dummystock_keys.includes("interval")).toBeTruthy();
-            expect(bad_dummystock_keys.includes("interval")).toBeFalsy();
+        it('individualStock has key interval', () => {
+            expect(good_dummystock_keys.includes("interval")).toBeTruthy()
+            expect(bad_dummystock_keys.includes("interval")).toBeFalsy()
         })
     })
 
     // Other Parameter Tests
     describe("getDefaultChartData's other parameters are properly defined to carry out it's function", () => {
-        test('parameter retries is type integer and uses Default value', () => {
-            expect(Number.isInteger(dummy_retries)).toBeTruthy();
-        })
-
-        test('parameter availablePeriods is type [{string:string}] with template [{period:interval}] and is defined', () => {
-            expect(good_dummy_available_keys.every((e) => { return typeof e === "string" })).toBeTruthy();
-            expect(good_dummy_available_values.every((e) => { return typeof e === "string" })).toBeTruthy();
-            expect(bad_dummy_available_values.every((e) => { return typeof e === "string" })).toBeFalsy();
+        it('parameter retries is type integer and uses Default value', () => expect(Number.isInteger(dummy_retries)).toBeTruthy())
+        it('parameter availablePeriods is type [{string:string}] with template [{period:interval}] and is defined', () => {
+            expect(good_dummy_available_keys.every((e) => { return typeof e === "string" })).toBeTruthy()
+            expect(good_dummy_available_values.every((e) => { return typeof e === "string" })).toBeTruthy()
+            expect(bad_dummy_available_values.every((e) => { return typeof e === "string" })).toBeFalsy()
         })
     })
 
     // getDefaultChartData behavior tests
-
     describe("getDefaultChartData behaves as expected on Mock Data", () => {
 
         describe("should get the expected API data on Sucessful API Response", () => {
             // See also: https://vhudyma-blog.eu/3-ways-to-mock-axios-in-jest/
             const TSLA_Mock_Stock = {
                 "ticker": "TSLA",
-                "interval": ONE_DAY,
-                "period": ONE_WEEK
+                "interval": CONSTANTS.ONE_DAY,
+                "period": CONSTANTS.ONE_WEEK
             }
-
-            axios.get.mockResolvedValue(TSLA_dummy_API_Response);
-
-            it("Expect the API response to not be undefined", async () => {
-                // Get Server Response 
-                const response = await getChartData(TSLA_Mock_Stock)
-                expect(response).not.toBe(undefined)
-            })
-
+            axios.get.mockResolvedValue(TSLA_dummy_API_Response)
+            it("Expect the API response to not be undefined", async () => await expect(getChartData(TSLA_Mock_Stock)).not.toBe(undefined))
             it("Expect the field meta to be defined", async () => {
                 // Get Server Response 
                 const response = await getChartData(TSLA_Mock_Stock)
                 const firstDataPoint = response.chart.result[0].meta
                 expect(firstDataPoint).not.toBe(undefined)
             })
-
             it("Expect the field timestamp to be defined", async () => {
                 // Get Server Response 
                 const response = await getChartData(TSLA_Mock_Stock)
                 const firstDataPoint = response.chart.result[0].timestamp
                 expect(firstDataPoint).not.toBe(undefined)
             })
-
             it("Expect the field quote to be defined", async () => {
                 // Get Server Response 
                 const response = await getChartData(TSLA_Mock_Stock)
                 const firstDataPoint = response.chart.result[0].indicators.quote[0]
                 expect(firstDataPoint).not.toBe(undefined)
             })
-
             it("Expect the values to be in the correct format", async () => {
                 // Get Server Response 
                 const response = await getChartData(TSLA_Mock_Stock)
                 const firstDataPoint = response.chart.result[0].indicators.quote[0].close[0]
                 expect(Object.values(firstDataPoint).every(value => typeof value === 'number')).toBeTruthy()
             })
-
             it("Should call the server once with the proper data", async () => {
-                // Get Server Response 
-                const response = await getChartData(TSLA_Mock_Stock)
                 // Expect Server to have been called with this string
                 expect(axios.get).toHaveBeenCalledWith("https://yh-finance.p.rapidapi.com/stock/v3/get-chart"
                     , {
@@ -538,19 +407,14 @@ describe('getDefaultChartData should try to get all the stock period chart data 
                             'X-RapidAPI-Host': 'yh-finance.p.rapidapi.com',
                             'X-RapidAPI-Key': process.env.NEXT_PUBLIC_RAPIDAPI_KEY
                         }, timeout: 4000
-                    });
+                    })
             })
         })
-
-        // Todo: Figure out how to test axios-retry
-        it("should retry getting visiblePeriod's API data up to retries times, but short circuit if sucessful", async () => { })
-        // Todo: Figure out how to test axios-retry
-        it("should not retry getting non-visible periods's API data", () => { })
     })
 })
 
 describe('toBacktesterInput should convert API data into proper form to be handled by Memo', () => {
-    // Mock Data (Limited Version of a Fake API Response)
+    // Mock Data (Limited Version of a Fake API Response) and Variables
     // ------------------
     const goodInput = {
         "chart": {
@@ -742,7 +606,7 @@ describe('toBacktesterInput should convert API data into proper form to be handl
                                     72: 753.8699951171875,
                                     73: 754.8599853515625,
                                     74: 736.27001953125,
-                                    75: 743,
+                                    75: 743.0,
                                     76: 744.489990234375,
                                     77: 755.8300170898438,
                                     78: 756.989990234375,
@@ -775,98 +639,224 @@ describe('toBacktesterInput should convert API data into proper form to be handl
             ]
         }
     }
+    const badInput = []
+    const noMetaIn = {
+        "chart": {
+            "result": [
+                {
+                    "timestamp": {
+                        0: 1622035800,
+                        1: 1622122200,
+                    },
+                    "indicators": {
+                        "quote": [
+                            {
+                                "close": {
+                                    0: 619.1300048828125,
+                                    1: 630.8499755859375,
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+    const noDataIn = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {
+                        "symbol": "TSLA",
+                        "dataGranularity": "1d",
+                        "range": "1y"
+                    },
+                    "timestamp": {
+                        0: 1622035800,
+                        1: 1622122200,
+                    }
+                }
+            ]
+        }
+    }
+    const noTimeIn = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {
+                        "symbol": "TSLA",
+                        "dataGranularity": "1d",
+                        "range": "1y"
+                    },
+                    "indicators": {
+                        "quote": [
+                            {
+                                "close": {
+                                    0: 619.1300048828125,
+                                    1: 630.8499755859375,
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+    const noResultsIn = {
+        "chart": {
+            
+        }
+    }
+    const invalidTicker = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {
+                        "symbol": "T",
+                        "dataGranularity": "1d",
+                        "range": "1y"
+                    },
+                    "timestamp": {
+                        0: 1622035800,
+                        1: 1622122200,
+                    },
+                    "indicators": {
+                        "quote": [
+                            {
+                                "close": {
+                                    0: 619.1300048828125,
+                                    1: 630.8499755859375,
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+    const invalidTimeStamp = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {
+                        "symbol": "TSLA",
+                        "dataGranularity": "1d",
+                        "range": "1y"
+                    },
+                    "timestamp": {
+                        0: "1622035800",
+                        1: 1622122200,
+                    },
+                    "indicators": {
+                        "quote": [
+                            {
+                                "close": {
+                                    0: 619.1300048828125,
+                                    1: 630.8499755859375,
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+    const invalidStockValue = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {
+                        "symbol": "TSLA",
+                        "dataGranularity": "1d",
+                        "range": "1y"
+                    },
+                    "timestamp": {
+                        0: 1622035800,
+                        1: 1622122200,
+                    },
+                    "indicators": {
+                        "quote": [
+                            {
+                                "close": {
+                                    0: "619.1300048828125",
+                                    1: 630.8499755859375,
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+
     const goodInputTimeStamps = goodInput.chart.result[0].timestamp
     const goodInputMeta = goodInput.chart.result[0].meta
     const goodInputIndicators = goodInput.chart.result[0].indicators
 
     // Mock Functions
     // ------------------
-    const goodInputFx = toBacktesterInput(goodInput)
+    const goodInputFx = helpers.toBacktesterInput(goodInput)
 
-    const badInputFx = () => getDefaultChartData(badInput)
-    const badInputFx2 = () => getDefaultChartData(noMetaIn)
-    const badInputFx3 = () => getDefaultChartData(noDataIn)
-    const badInputFx4 = () => getDefaultChartData(noTimeIn)
+    const badInputFx = () => helpers.toBacktesterInput(badInput)
+    const badInputFx2 = () => helpers.toBacktesterInput(noMetaIn)
+    const badInputFx3 = () => helpers.toBacktesterInput(noDataIn)
+    const badInputFx4 = () => helpers.toBacktesterInput(noTimeIn)
+    const badInputFx5 = () => helpers.toBacktesterInput(noResultsIn)
+    const badInputFx6 = () => helpers.toBacktesterInput(invalidTicker)
+    const badInputFx7 = () => helpers.toBacktesterInput(invalidTimeStamp)
+    const badInputFx8 = () => helpers.toBacktesterInput(invalidStockValue)
 
     // Variables
     // ------------------
     const expectedKeys = new Set(["ticker", "date", "value"])
     const receivedKeys = goodInputFx.map(dicts => Object.keys(dicts))
-    const receivedKeysGood = receivedKeys.every(keylist => areSetsEqual(new Set(keylist), expectedKeys))
-
-    const badInput = []
-    const noMetaIn = { "chart": { "result": [{}, { "timestamp": [1622035800, 1622122200] }, { "indicators": { "quote": [1, 2, 3], "adjclose": [1, 2, 3] } }] } }
-    const noDataIn = { "chart": { "result": [{ "Hey": 1 }, { "timestamp": [1622035800, 1622122200] }, { "indicators": {} }] } }
-    const noTimeIn = { "chart": { "result": [{ "Hey": 1 }, {}, { "indicators": { "Hey": 1 } }] } }
+    const receivedKeysGood = receivedKeys.every(keylist => helpers.areSetsEqual(new Set(keylist), expectedKeys))
 
     // Backtester Function Tests
     // ------------------
-    
     describe('function should throw errors on improper inputs', () => {
-
         it("should throw an error if API Meta Data is unavailable", () => {
-            expect(badInputFx).toThrow(Error);
-            expect(badInputFx2).toThrow(Error);
+            expect(badInputFx).toThrow(Error)
+            expect(badInputFx2).toThrow(/Meta/)
         })
-
-        it("should throw an error if API Stock values are unavailable", () => {
-            expect(badInputFx).toThrow(Error);
-            expect(badInputFx3).toThrow(Error);
+        it("should throw an error if API results are unavailable", () => expect(badInputFx5).toThrow(/Results/))
+        it("should throw an error if API Stock values are unavailable", () => expect(badInputFx3).toThrow(/Stock/))
+        it("should throw an error if API timestamps is unavailable", () => expect(badInputFx4).toThrow(/Timestamp/))
+        it("should throw an error if API ticker is invalid", () => {
+            expect(CONSTANTS.MATCH_TICKER.test(invalidTicker.chart.result[0].meta.symbol)).toBeFalsy()
+            expect(badInputFx6).toThrow(/Invalid Ticker/)
         })
-
-        it("should throw an error if API timestamps is unavailable", () => {
-            expect(badInputFx).toThrow(Error);
-            expect(badInputFx4).toThrow(Error);
+        it("should throw an error if API timestamp is invalid", () => {
+            expect(Object.values(invalidTimeStamp).every(dict => CONSTANTS.MATCH_DATETIME.test(dict["date"]))).toBeFalsy()
+            expect(badInputFx7).toThrow(/Invalid Timestamp/)
+        })
+        it("should throw an error if API stock values are invalid", () => {
+            expect(Object.values(invalidStockValue).every(dict => CONSTANTS.MATCH_FLOAT.test(dict["value"]))).toBeFalsy()
+            expect(badInputFx8).toThrow(/Invalid Stock Value/)
         })
     })
 
     describe('function should convert a list of values into a list of dictionaries, consumable by backtester', () => {
-
-        it('goodInput returned function should be a list', () => {
-            expect(Array.isArray(goodInputFx)).toBeTruthy()
-        })
-
-        it("should return an array with length equal to input's value array length", () => {
-            expect(goodInputFx.length === Object.values(goodInputIndicators.quote[0].close).length).toBeTruthy();
-        })
-
-        it("should have proper output keys", () => {
-            expect(receivedKeysGood).toBeTruthy();
-        })
-
+        it('goodInput returned function should be a list', () => expect(Array.isArray(goodInputFx)).toBeTruthy())
+        it("should return an array with length equal to input's value array length", () => expect(goodInputFx.length === Object.values(goodInputIndicators.quote[0].close).length).toBeTruthy())
+        it("should have proper output keys", () => expect(receivedKeysGood).toBeTruthy())
         it("should have proper format for values", () => {
-            // See also: https://regex-generator.olafneumann.org/
-            const matchFloat = /[0-9]*\.[0-9]+/i;
-            const matchTicker = /^[a-zA-Z]{2,5}$/i;
-            const matchDateTime = /\d\d[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?\s[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,3})?/i;
+            const tickerValid = goodInputFx.every(dict => CONSTANTS.MATCH_TICKER.test(dict["ticker"]))
+            const dateValid = goodInputFx.every(dict => CONSTANTS.MATCH_DATETIME.test(dict["date"]))
+            const valueValid = goodInputFx.every(dict => CONSTANTS.MATCH_FLOAT.test(dict["value"]))
 
-            // Test All Dictionary Values in Output list to see if they match Regex
-            const tickerValid = goodInputFx.map(dict => matchTicker.test(dict["ticker"]))
-            const dateValid = goodInputFx.map(dict => matchDateTime.test(dict["date"]))
-            const valueValid = goodInputFx.map(dict => matchFloat.test(dict["value"]))
-
-            expect(tickerValid).toBeTruthy();
-            expect(dateValid).toBeTruthy();
-            expect(valueValid).toBeTruthy();
+            expect(tickerValid).toBeTruthy()
+            expect(dateValid).toBeTruthy()
+            expect(valueValid).toBeTruthy()
         })
     })
 
     describe('function should return proper values', () => {
-
         it('should have the correct date/time for each dictionary in the output list', () => {
-            // 0. iterate through each date/time, converting to moment string with proper format: 
-            const formattedDateTimes = Object.values(goodInputTimeStamps).map(unixDate => moment.unix(goodInputTimeStamps[unixDate]).format(DATE_FORMAT)) // [formattedDates: str]
-
-            // 1. expect that every date in your output matches the expected datetimes, up to the end of the input (does not check if lists are same size): 
-            expect(goodInputFx.every((dict, index) => formattedDateTimes[index] === dict["date"])).toBeTruthy();
+            const formattedDateTimes = Object.values(goodInputTimeStamps).map(unixDate => moment.unix(unixDate).format(CONSTANTS.DATE_FORMAT)) // [formattedDates: str]
+            expect(goodInputFx.every((dict, index) => formattedDateTimes[index] === dict["date"])).toBeTruthy()
         })
-
-        it('should have the correct ticker for each dictionary in the output list', () => {
-            expect(goodInputFx.every(dict => goodInputMeta.symbol === dict["ticker"])).toBeTruthy();
-        })
-
-        it('should have the correct value for each dictionary in the output list', () => {
-            expect(goodInputFx.every((dict,index) => Object.values(goodInputIndicators["quote"][0]["close"])[index] === dict["value"])).toBeTruthy();
-        })
+        it('should have the correct ticker for each dictionary in the output list', () => expect(goodInputFx.every(dict => goodInputMeta.symbol === dict["ticker"])).toBeTruthy())
+        it('should have the correct value for each dictionary in the output list', () => expect(goodInputFx.every((dict, index) => Object.values(goodInputIndicators["quote"][0]["close"])[index] === dict["value"])).toBeTruthy())
     })
 })
