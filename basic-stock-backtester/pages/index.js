@@ -114,8 +114,6 @@ export default function Home() {
   const getPeriod = async (ticker, period, interval) => {
     const form = { ticker, interval, period }
     const response = await getChartData(form)
-    //const data = response.data.chart.result[0].indicators.quote[0].close
-    console.log(response)
     setAPIData({ ...APIData, [period]: response })
   }
 

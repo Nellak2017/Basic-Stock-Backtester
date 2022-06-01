@@ -1,6 +1,7 @@
 import * as helpers from './helpers'
 import * as CONSTANTS from '../content/constants'
 import * as content from '../content/homeContent'
+import * as backtesterfx from '../backtester-algos/backtester'
 import { getChartData } from '../api/chartData'
 import axios from 'axios'
 import moment from 'moment'
@@ -23,24 +24,24 @@ describe('Range function should make a list of numbers from 0 to n-1, like Pytho
     it('helpers.range(0,0) should be equal to []', () => expect(edge).toEqual([]))
     it('helpers.range(0,0) should have 0 length', () => expect(edge.length).toBe(0))
     it('helpers.range(a,b) should have first element a', () => {
-        expect(rangeArr[0]).toBe(0) 
-        expect(negativeRange[0]).toBe(-5) 
+        expect(rangeArr[0]).toBe(0)
+        expect(negativeRange[0]).toBe(-5)
     })
     it('helpers.range(a,b) should have last element b', () => {
-        expect(rangeArr[9]).toBe(9) 
-        expect(negativeRange[4]).toBe(-1) 
+        expect(rangeArr[9]).toBe(9)
+        expect(negativeRange[4]).toBe(-1)
     })
     it('helpers.range(a,b) should have length b', () => {
-        expect(rangeArr.length).toBe(10) 
-        expect(negativeRange.length).toBe(5) 
+        expect(rangeArr.length).toBe(10)
+        expect(negativeRange.length).toBe(5)
     })
     it('helpers.range(a,b) should have sum equal to n(n-1)/2', () => {
-        expect(rangeArr.reduce((a, b) => a + b)).toBe((10 * 9) / 2) 
-        expect(negativeRange.reduce((a, b) => a + b)).toBe(-15) 
+        expect(rangeArr.reduce((a, b) => a + b)).toBe((10 * 9) / 2)
+        expect(negativeRange.reduce((a, b) => a + b)).toBe(-15)
     })
     it('helpers.range(a,b) should be a strictly increasing list', () => {
         expect(!!rangeArr.reduce((a, b) => a < b ? b : -1)).toBeTruthy()
-        expect(!!negativeRange.reduce((a, b) => a < b ? b : 1)).toBeTruthy() 
+        expect(!!negativeRange.reduce((a, b) => a < b ? b : 1)).toBeTruthy()
     })
 })
 
@@ -413,7 +414,7 @@ describe('getDefaultChartData should try to get all the stock period chart data 
     })
 })
 
-describe('toBacktesterInput should convert API data into proper form to be handled by Memo', () => {
+describe('toBacktesterInput should convert API data into proper form to be handled by Backtester', () => {
     // Mock Data (Limited Version of a Fake API Response) and Variables
     // ------------------
     const goodInput = {
@@ -704,7 +705,7 @@ describe('toBacktesterInput should convert API data into proper form to be handl
     }
     const noResultsIn = {
         "chart": {
-            
+
         }
     }
     const invalidTicker = {
@@ -812,7 +813,7 @@ describe('toBacktesterInput should convert API data into proper form to be handl
     const receivedKeys = goodInputFx.map(dicts => Object.keys(dicts))
     const receivedKeysGood = receivedKeys.every(keylist => helpers.areSetsEqual(new Set(keylist), expectedKeys))
 
-    // Backtester Function Tests
+    // To Backtester Input Function Tests
     // ------------------
     describe('function should throw errors on improper inputs', () => {
         it("should throw an error if API Meta Data is unavailable", () => {
@@ -858,5 +859,101 @@ describe('toBacktesterInput should convert API data into proper form to be handl
         })
         it('should have the correct ticker for each dictionary in the output list', () => expect(goodInputFx.every(dict => goodInputMeta.symbol === dict["ticker"])).toBeTruthy())
         it('should have the correct value for each dictionary in the output list', () => expect(goodInputFx.every((dict, index) => Object.values(goodInputIndicators["quote"][0]["close"])[index] === dict["value"])).toBeTruthy())
+    })
+})
+
+describe("toMemoObject should convert Backtested data into proper form to be handled by Display", () => {
+    // Expected Keys for first nesting level
+    // ----------------
+    const expectedKeys1 = new Set(["values", "ema12", "ema24"])
+
+    // Good backtester algo inputs
+    // ----------------
+    const goodBacktesterAlgoInput = [
+        { 'ticker': 'TSLA', 'date': '2022:05:23 00:00:00', 'value': 655.02001953125 },
+        { 'ticker': 'TSLA', 'date': '2022:05:24 00:00:00', 'value': 653.530029296875 },
+        { 'ticker': 'TSLA', 'date': '2022:05:25 00:00:00', 'value': 623.8499755859375 },
+        { 'ticker': 'TSLA', 'date': '2022:05:26 00:00:00', 'value': 661.4199829101562 },
+        { 'ticker': 'TSLA', 'date': '2022:05:27 00:00:00', 'value': 723.25 }
+    ]
+    const initSMA24 = 2685.78
+    const initSMA12 = 3029.18
+    const initHolding = false
+
+    // Good backtester output
+    // ----------------
+    const goodInput = backtesterfx.conservativeMomentumBacktesterFunction(goodBacktesterAlgoInput, initSMA24, initSMA12, initHolding,
+        parseFloat(CONSTANTS.UPPER_SELL), parseFloat(CONSTANTS.LOWER_SELL))
+
+    // Bad backtester output
+    // ----------------
+    const tickerInvalid = [{ 'ticker': 'ETH-USD123', 'date': '2022:04:30 00:00:00', 'value': 2729.994140625, 'ema24': 2696.16027578125, 'ema12': 2996.3112995793267, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+    { 'ticker': 'ETH-USD', 'date': '2022:05:01 00:00:00', 'value': 2827.614013671875, 'ema24': 2698.8669849687503, 'ema12': 2955.3394289709686, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' }]
+    const dateInvalid = [{ 'ticker': 'ETH-USD', 'date': '2022:04:30 00:00:00', 'value': 2729.994140625, 'ema24': 2696.16027578125, 'ema12': 2996.3112995793267, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+    { 'ticker': 'ETH-USD', 'date': ':05:01 00:00:00', 'value': 2827.614013671875, 'ema24': 2698.8669849687503, 'ema12': 2955.3394289709686, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' }]
+    const valueInvalid = [{ 'ticker': 'ETH-USD', 'date': '2022:04:30 00:00:00', 'value': 2729.994140625, 'ema24': 2696.16027578125, 'ema12': 2996.3112995793267, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+    { 'ticker': 'ETH-USD', 'date': '2022:05:01 00:00:00', 'value': "2827.614013671875", 'ema24': 2698.8669849687503, 'ema12': 2955.3394289709686, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' }]
+    const ema24Invalid = [{ 'ticker': 'ETH-USD', 'date': '2022:04:30 00:00:00', 'value': 2729.994140625, 'ema24': 2696.16027578125, 'ema12': 2996.3112995793267, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+    { 'ticker': 'ETH-USD', 'date': '2022:05:01 00:00:00', 'value': 2827.614013671875, 'ema24': "2698.8669849687503", 'ema12': 2955.3394289709686, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' }]
+    const ema12Invalid = [{ 'ticker': 'ETH-USD', 'date': '2022:04:30 00:00:00', 'value': 2729.994140625, 'ema24': 2696.16027578125, 'ema12': 2996.3112995793267, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+    { 'ticker': 'ETH-USD', 'date': '2022:05:01 00:00:00', 'value': 2827.614013671875, 'ema24': 2698.8669849687503, 'ema12': "2955.3394289709686", 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' }]
+    const holdingInvalid = [{ 'ticker': 'ETH-USD', 'date': '2022:04:30 00:00:00', 'value': 2729.994140625, 'ema24': 2696.16027578125, 'ema12': 2996.3112995793267, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+    { 'ticker': 'ETH-USD', 'date': '2022:05:01 00:00:00', 'value': 2827.614013671875, 'ema24': 2698.8669849687503, 'ema12': 2955.3394289709686, 'holding_stock': "true", 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' }]
+    const profitInvalid = [{ 'ticker': 'ETH-USD', 'date': '2022:04:30 00:00:00', 'value': 2729.994140625, 'ema24': 2696.16027578125, 'ema12': 2996.3112995793267, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+    { 'ticker': 'ETH-USD', 'date': '2022:05:01 00:00:00', 'value': 2827.614013671875, 'ema24': 2698.8669849687503, 'ema12': 2955.3394289709686, 'holding_stock': true, 'current_profitability_multiplier': "1.0", 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' }]
+    const positionEvalInvalid = [{ 'ticker': 'ETH-USD', 'date': '2022:04:30 00:00:00', 'value': 2729.994140625, 'ema24': 2696.16027578125, 'ema12': 2996.3112995793267, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 1, 'position_two_step_evaluation': 'BUY and HOLD' },
+    { 'ticker': 'ETH-USD', 'date': '2022:05:01 00:00:00', 'value': 2827.614013671875, 'ema24': 2698.8669849687503, 'ema12': 2955.3394289709686, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 'HOLD and HOLD' }]
+    const position2stepInvalid = [{ 'ticker': 'ETH-USD', 'date': '2022:04:30 00:00:00', 'value': 2729.994140625, 'ema24': 2696.16027578125, 'ema12': 2996.3112995793267, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'BUY', 'position_two_step_evaluation': 'BUY and HOLD' },
+    { 'ticker': 'ETH-USD', 'date': '2022:05:01 00:00:00', 'value': 2827.614013671875, 'ema24': 2698.8669849687503, 'ema12': 2955.3394289709686, 'holding_stock': true, 'current_profitability_multiplier': 1.0, 'position_evaluation': 'HOLD', 'position_two_step_evaluation': 2 }]
+
+    // Mock Functions
+    // ------------------
+    const goodInputFx = () => helpers.toMemoObject(goodInput)
+
+    const badInputFx = () => helpers.toMemoObject(tickerInvalid)
+    const badInputFx2 = () => helpers.toMemoObject(dateInvalid)
+    const badInputFx3 = () => helpers.toMemoObject(valueInvalid)
+    const badInputFx4 = () => helpers.toMemoObject(ema24Invalid)
+    const badInputFx5 = () => helpers.toMemoObject(ema12Invalid)
+    const badInputFx6 = () => helpers.toMemoObject(holdingInvalid)
+    const badInputFx7 = () => helpers.toMemoObject(profitInvalid)
+    const badInputFx8 = () => helpers.toMemoObject(positionEvalInvalid)
+    const badInputFx9 = () => helpers.toMemoObject(position2stepInvalid)
+
+    // Test my Function for correctness
+    // ----------------
+    describe("function should throw errors on invalid inputs", () => {
+        it("should not throw an error on correct input", () => expect(goodInputFx).not.toThrow(Error))
+        it("should throw an error if ticker is invalid", () => expect(badInputFx).toThrow(/Invalid ticker/))
+        it("should throw an error if date is invalid", () => expect(badInputFx2).toThrow(/Invalid date/))
+        it("should throw an error if value is invalid", () => expect(badInputFx3).toThrow(/Invalid value/))
+        it("should throw an error if ema24 is invalid", () => expect(badInputFx4).toThrow(/Invalid ema24/))
+        it("should throw an error if ema12 is invalid", () => expect(badInputFx5).toThrow(/Invalid ema12/))
+        it("should throw an error if holding_stock is invalid", () => expect(badInputFx6).toThrow(/Invalid holding_stock/))
+        it("should throw an error if current_profitability_multiplier is invalid", () => expect(badInputFx7).toThrow(/Invalid current_profitability_multiplier/))
+        it("should throw an error if position_evaluation is invalid", () => expect(badInputFx8).toThrow(/Invalid position_evaluation/))
+        it("should throw an error if position_two_step_evaluation is invalid", () => expect(badInputFx9).toThrow(/Invalid position_two_step_evaluation/))
+    })
+
+    describe("function should convert [{...backtested Data},...] to {1D:{values:[...],ema12:[...],ema24:[...]},...} format, consumable by Display", () => {
+        it("function should return an object ex:({1D:..., 1WK:..., ...})", () => expect(goodInputFx() !== null && !Array.isArray(goodInputFx()) && typeof goodInputFx() === "object").toBeTruthy())
+        it("function should return an object with expected keys. ex:(1D,1WK,...) ", () => expect(helpers.areSetsEqual(new Set(Object.keys(goodInputFx())), expectedKeys1)).toBeTruthy())
+        it("function should return an array with expected values for the nested(1) arrays. ex:(100,101,99.2,...)", () => expect(Object.values(goodInputFx()).every(valueLis => valueLis.every(val => typeof val === "number" && !isNaN(val)))).toBeTruthy())
+    })                                                                                                                        
+
+    describe("The function should return proper values", () => {
+        it("should have correct values, ema24, and ema12 for all periods (in test case it is just 1D only)", () => {
+            // [[...values],[...ema12],[...ema24]] === [[helpers.extractData(goodInput, "value")],[helpers.extractData(goodInput, "ema12")],[helpers.extractData(goodInput, "ema24")]]
+            /**
+             * 1. define [[...values],[...ema12],[...ema24]] from the goodInputFunction for each period (3D list)=> [[[...values],[...ema12],[...ema24]], [[...values],[...ema12],[...ema24]], ...]
+             * 2. extract data from backtested input and put into form [[...values],[...ema12],[...ema24]], using [[helpers.extractData(goodInput, "value")],[helpers.extractData(goodInput, "ema12")],[helpers.extractData(goodInput, "ema24")]]
+             * 3. for all periodList in periods and for each list in periodList, compare the lists for equality
+             */
+            const expectedValues = Object.values(goodInputFx()) // list of stuff for TEST period (1D) it is a 2D list ---> [[...values],[...ema12],[...ema24]] 
+            const extractedValues = [helpers.extractData(goodInput, "value"), helpers.extractData(goodInput, "ema12"), helpers.extractData(goodInput, "ema24")]
+            const isCorrect = extractedValues.every((valuesList, valLisIndex) => valuesList.every((value, valIndex) => value === expectedValues[valLisIndex][valIndex]))
+            //const isCorrect = JSON.stringify(expectedValues) === JSON.stringify(extractedValues)
+            expect(isCorrect).toBeTruthy()
+        })
     })
 })

@@ -1,16 +1,6 @@
 // This file contains many of the helper functions used througout the project
 // The purpose of placing them here is to be able to easily test them
-import {
-    ONE_MINUTE,
-    DEFAULT_TICKER,
-    UPPER_SELL,
-    LOWER_SELL,
-    DEFAULT_RETRIES,
-    DATE_FORMAT,
-    MATCH_TICKER,
-    MATCH_DATETIME,
-    MATCH_FLOAT
-} from '../content/constants'
+import * as CONSTANTS from '../content/constants'
 
 import {
     defaultStockIntervals,
@@ -103,7 +93,7 @@ export const DTO = (period, interval, formValues) => {
     }
 }
 
-export const getDefaultChartData = ({ individualStock = defaultStock, retries = DEFAULT_RETRIES, availablePeriods = defaultStockIntervals } = {}) => {
+export const getDefaultChartData = ({ individualStock = defaultStock, retries = CONSTANTS.DEFAULT_RETRIES, availablePeriods = defaultStockIntervals } = {}) => {
     // pass in "1D" as visiblePeriod, 5 retries as standard
     return { "individualStock": individualStock, "retries": retries, "availablePeriods": availablePeriods }
 }
@@ -127,19 +117,40 @@ export const toBacktesterInput = (APIData) => {
 
     // More Input Validation
     // ------------------
-    if (typeof ticker !== "string" || !MATCH_TICKER.test(ticker)) throw new Error("Invalid Ticker found inside of toBacktesterInput function. Ensure all Tickers are between 2 and 5 characters long and are all strings too.")
-    if (!unixTimestamps.every(timestamp => typeof timestamp === "number" && MATCH_FLOAT.test(timestamp))) throw new Error("Invalid Timestamp found inside of toBacktesterInput function. Ensure all Timestamps are floating point numbers or integers, but not strings or any other type.")
-    if (!values.every(value => typeof value === "number" && MATCH_FLOAT.test(value))) throw new Error("Invalid Stock Value(s) found inside of toBacktesterInput function. Ensure all Timestamps are floating point numbers or integers, but not strings or any other type.")
+    if (typeof ticker !== "string" || !CONSTANTS.MATCH_TICKER.test(ticker)) throw new Error("Invalid Ticker found inside of toBacktesterInput function. Ensure all Tickers are between 2 and 5 characters long and are all strings too.")
+    if (!unixTimestamps.every(timestamp => typeof timestamp === "number" && CONSTANTS.MATCH_FLOAT.test(timestamp))) throw new Error("Invalid Timestamp found inside of toBacktesterInput function. Ensure all Timestamps are floating point numbers or integers, but not strings or any other type.")
+    if (!values.every(value => typeof value === "number" && CONSTANTS.MATCH_FLOAT.test(value))) throw new Error("Invalid Stock Value(s) found inside of toBacktesterInput function. Ensure all Timestamps are floating point numbers or integers, but not strings or any other type.")
 
     // Convert Unix dates to String Formatted Dates
     // ------------------
-    const formattedDateTimes = unixTimestamps.map(unixDate => moment.unix(unixDate).format(DATE_FORMAT))
+    const formattedDateTimes = unixTimestamps.map(unixDate => moment.unix(unixDate).format(CONSTANTS.DATE_FORMAT))
     // Ensure formatted date time has proper format
-    if (formattedDateTimes.every(datetime => typeof datetime === 'string' && MATCH_DATETIME.test(datetime)))
+    if (formattedDateTimes.every(datetime => typeof datetime === 'string' && CONSTANTS.MATCH_DATETIME.test(datetime)))
 
-    // Make the list of Objects in the proper format, and return it
+        // Make the list of Objects in the proper format, and return it
+        // ------------------
+        return values.map((value, index) => ({ "ticker": ticker, "date": formattedDateTimes[index], "value": value }))
+}
+
+export const toMemoObject = (BacktestedData) => {
+    // Input Validation
     // ------------------
-    return values.map((value, index) => ({ "ticker": ticker, "date": formattedDateTimes[index], "value": value }))
+    if (BacktestedData === undefined) throw new Error("All BacktestedData is missing inside of toMemoObject function. Ensure backtested data passed in is correct.")
+    if (!Object.values(BacktestedData).every(dict => CONSTANTS.MATCH_TICKER.test(dict["ticker"]))) throw new Error("Invalid ticker inside of the toMemoObject function. Make sure your backtested data is correct.")
+    if (!Object.values(BacktestedData).every(dict => CONSTANTS.MATCH_DATETIME.test(dict["date"]))) throw new Error("Invalid date inside of the toMemoObject function. Make sure your backtested data is correct.")
+    if (!Object.values(BacktestedData).every(dict => typeof dict["value"] === "number" && !isNaN(dict["value"]))) throw new Error("Invalid value inside of the toMemoObject function. Make sure your backtested data is correct.")
+    if (!Object.values(BacktestedData).every(dict => typeof dict["ema24"] === "number" && !isNaN(dict["ema24"]))) throw new Error("Invalid ema24 inside of the toMemoObject function. Make sure your backtested data is correct.")
+    if (!Object.values(BacktestedData).every(dict => typeof dict["ema12"] === "number" && !isNaN(dict["ema12"]))) throw new Error("Invalid ema12 inside of the toMemoObject function. Make sure your backtested data is correct.")
+    if (!Object.values(BacktestedData).every(dict => typeof dict["holding_stock"] === "boolean")) throw new Error("Invalid holding_stock inside of the toMemoObject function. Make sure your backtested data is correct.")
+    if (!Object.values(BacktestedData).every(dict => typeof dict["current_profitability_multiplier"] === "number" && !isNaN(dict["current_profitability_multiplier"]))) throw new Error("Invalid current_profitability_multiplier inside of the toMemoObject function. Make sure your backtested data is correct.")
+    if (!Object.values(BacktestedData).every(dict => CONSTANTS.MATCH_POSITION_EVAL.test(dict["position_evaluation"]))) throw new Error("Invalid position_evaluation inside of the toMemoObject function. Make sure your backtested data is correct.")
+    if (!Object.values(BacktestedData).every(dict => CONSTANTS.MATCH_POSITION_2_EVAL.test(dict["position_two_step_evaluation"]))) throw new Error("Invalid position_two_step_evaluation inside of the toMemoObject function. Make sure your backtested data is correct.")
+
+    return {
+        "values": extractData(BacktestedData, "value"),
+        "ema12": extractData(BacktestedData, "ema12"),
+        "ema24": extractData(BacktestedData, "ema24")
+    }
 }
 
 export const chartData = (dataSetLabels, labels, data, colors) => {
