@@ -16,7 +16,10 @@ export const getSmaDataPoint = async (ticker, date, days) => {
     const form = { ticker, interval: "1d", period: "1y", period1, period2 };
 
     if (typeof ticker !== 'string' || ticker.length === 0 || ticker.length > 4) { throw new Error("Ticker entered is invalid in getSmaDataPoint function.")}
-    if (typeof date !== 'string' || regexResult === false) { throw new Error("Date entered is invalid in getSmaDataPoint function.")}
+    if (typeof date !== 'string' || regexResult === false) { 
+        console.error(date)
+        throw new Error(`Date entered is invalid in getSmaDataPoint function. Got: ${date}`)
+    }
     if (typeof days !== 'number' || isNaN(days)) { throw new Error("Days entered is invalid in getSmaDataPoint function.")}
     if (period1 === period2) { throw new Error("Period1 and Period2 are the same in getSmaDataPoint function.")}
 

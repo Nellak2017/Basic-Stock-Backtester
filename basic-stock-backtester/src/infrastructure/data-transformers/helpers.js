@@ -101,8 +101,8 @@ export const getDefaultChartData = ({ individualStock = defaultStock, retries = 
 export const toBacktesterInput = (APIData) => {
     // Input Validation
     // ------------------
-    if (APIData === undefined) throw new Error("All API Data is missing inside of toBacktesterInput function. Ensure API Data passed in is correct.")
-    if (APIData?.chart === undefined) throw new Error("Chart is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
+    if (APIData === undefined) throw new Error(`All API Data is missing inside of toBacktesterInput function. Ensure API Data passed in is correct.`)
+    if (APIData?.chart === undefined) throw new Error(`Chart is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct. ${Object.values(APIData)}`)
     if (APIData.chart?.result === undefined) throw new Error("Results are missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
     if (APIData.chart.result[0]?.meta === undefined) throw new Error("Meta Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
     if (APIData.chart.result[0]?.timestamp === undefined) throw new Error("Timestamp Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
@@ -113,29 +113,29 @@ export const toBacktesterInput = (APIData) => {
     const results = APIData?.chart?.result[0]
     const ticker = results?.meta?.symbol
     const unixTimestamps = Object.values(results?.timestamp)
-    const values = Object.values(results?.indicators?.quote[0]?.close)
+    const values = Object.values(results?.indicators?.quote[0]?.close).filter(stockValue => stockValue !== null)
 
     // More Input Validation
     // ------------------
     if (typeof ticker !== "string" || !CONSTANTS.MATCH_TICKER.test(ticker)) throw new Error("Invalid Ticker found inside of toBacktesterInput function. Ensure all Tickers are between 2 and 5 characters long and are all strings too.")
     if (!unixTimestamps.every(timestamp => typeof timestamp === "number" && CONSTANTS.MATCH_FLOAT.test(timestamp))) throw new Error("Invalid Timestamp found inside of toBacktesterInput function. Ensure all Timestamps are floating point numbers or integers, but not strings or any other type.")
-    if (!values.every(value => typeof value === "number" && CONSTANTS.MATCH_FLOAT.test(value))) throw new Error("Invalid Stock Value(s) found inside of toBacktesterInput function. Ensure all Timestamps are floating point numbers or integers, but not strings or any other type.")
+    if (!values.every(value => typeof value === "number" && !isNaN(value))) throw new Error("Invalid Stock Value(s) found inside of toBacktesterInput function. Ensure all Stock Values are floating point numbers or integers, but not strings or any other type.")
 
     // Convert Unix dates to String Formatted Dates
     // ------------------
     const formattedDateTimes = unixTimestamps.map(unixDate => moment.unix(unixDate).format(CONSTANTS.DATE_FORMAT))
     // Ensure formatted date time has proper format
-    if (formattedDateTimes.every(datetime => typeof datetime === 'string' && CONSTANTS.MATCH_DATETIME.test(datetime)))
+    if (!formattedDateTimes.every(datetime => typeof datetime === 'string' && CONSTANTS.MATCH_DATETIME.test(datetime))) throw new Error("Invalid Date time format in toBacktesterInput function.")
 
-        // Make the list of Objects in the proper format, and return it
-        // ------------------
-        return values.map((value, index) => ({ "ticker": ticker, "date": formattedDateTimes[index], "value": value }))
+    // Make the list of Objects in the proper format, and return it
+    // ------------------
+    return values.map((value, index) => ({ "ticker": ticker, "date": formattedDateTimes[index], "value": value }))
 }
 
 export const toMemoObject = (BacktestedData) => {
     // Input Validation
     // ------------------
-    if (BacktestedData === undefined) throw new Error("All BacktestedData is missing inside of toMemoObject function. Ensure backtested data passed in is correct.")
+    if (BacktestedData === null || typeof BacktestedData === "undefined") throw new Error("All BacktestedData is missing inside of toMemoObject function. Ensure backtested data passed in is correct.")
     if (!Object.values(BacktestedData).every(dict => CONSTANTS.MATCH_TICKER.test(dict["ticker"]))) throw new Error("Invalid ticker inside of the toMemoObject function. Make sure your backtested data is correct.")
     if (!Object.values(BacktestedData).every(dict => CONSTANTS.MATCH_DATETIME.test(dict["date"]))) throw new Error("Invalid date inside of the toMemoObject function. Make sure your backtested data is correct.")
     if (!Object.values(BacktestedData).every(dict => typeof dict["value"] === "number" && !isNaN(dict["value"]))) throw new Error("Invalid value inside of the toMemoObject function. Make sure your backtested data is correct.")
