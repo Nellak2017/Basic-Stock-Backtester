@@ -1,35 +1,12 @@
 // This file contains any content or data that will be on the front end
-import {
-    ONE_DAY,
-    ONE_WEEK,
-    ONE_MONTH,
-    THREE_MONTHS,
-    ONE_YEAR,
-    FIVE_YEARS,
-    ALL,
-    ONE_MINUTE,
-    TWO_MINUTES,
-    FIVE_MINUTES,
-    FIFTEEN_MINUTES,
-    THIRTY_MINUTES,
-    NINETY_MINUTES,
-    ONE_HOUR,
-    FIVE_DAYS,
-    DEFAULT_TICKER,
-    UPPER_SELL,
-    LOWER_SELL,
-    INIT_HOLDING,
-    STRATEGY,
-    EMA_LOWER_INDICATOR,
-    EMA_UPPER_INDICATOR
-} from '../content/constants'
+import * as CONSTANTS from '../content/constants'
 
 export const formInputs = [
     {
         id: 1,
         name: "ticker",
         type: "text",
-        placeholder: DEFAULT_TICKER,
+        placeholder: CONSTANTS.DEFAULT_TICKER,
         label: "Stock Ticker",
         element: "input",
         required: true
@@ -38,30 +15,30 @@ export const formInputs = [
         id: 2,
         name: "interval",
         type: "select",
-        placeholder: ONE_MONTH,
+        placeholder: CONSTANTS.ONE_MONTH,
         label: "Query Interval",
         element: "select",
         required: true,
         options: [
-            { option: ONE_MINUTE },
-            { option: TWO_MINUTES },
-            { option: FIVE_MINUTES },
-            { option: FIFTEEN_MINUTES },
-            { option: THIRTY_MINUTES },
-            { option: NINETY_MINUTES },
-            { option: ONE_HOUR },
-            { option: ONE_DAY },
-            { option: FIVE_DAYS },
-            { option: ONE_WEEK },
-            { option: ONE_MONTH },
-            { option: THREE_MONTHS },
+            { option: CONSTANTS.ONE_MINUTE },
+            { option: CONSTANTS.TWO_MINUTES },
+            { option: CONSTANTS.FIVE_MINUTES },
+            { option: CONSTANTS.FIFTEEN_MINUTES },
+            { option: CONSTANTS.THIRTY_MINUTES },
+            { option: CONSTANTS.NINETY_MINUTES },
+            { option: CONSTANTS.ONE_HOUR },
+            { option: CONSTANTS.ONE_DAY },
+            { option: CONSTANTS.FIVE_DAYS },
+            { option: CONSTANTS.ONE_WEEK },
+            { option: CONSTANTS.ONE_MONTH },
+            { option: CONSTANTS.THREE_MONTHS },
         ]
     },
     {
         id: 3,
         name: "upperSell",
         type: "number",
-        placeholder: UPPER_SELL,
+        placeholder: CONSTANTS.UPPER_SELL,
         label: "Upper Sell",
         element: "input",
         required: true
@@ -70,7 +47,7 @@ export const formInputs = [
         id: 4,
         name: "lowerSell",
         type: "number",
-        placeholder: LOWER_SELL,
+        placeholder: CONSTANTS.LOWER_SELL,
         label: "Lower Sell",
         element: "input",
         required: true
@@ -135,56 +112,57 @@ export const formInputs = [
 export const chartStockPeriods = [
     {
         id: 1,
-        value: ONE_DAY
+        value: CONSTANTS.ONE_DAY
     },
     {
         id: 2,
-        value: ONE_WEEK
+        value: CONSTANTS.ONE_WEEK
     },
     {
         id: 3,
-        value: ONE_MONTH
+        value: CONSTANTS.ONE_MONTH
     },
     {
         id: 4,
-        value: THREE_MONTHS
+        value: CONSTANTS.THREE_MONTHS
     },
     {
         id: 5,
-        value: ONE_YEAR
+        value: CONSTANTS.ONE_YEAR
     },
     {
         id: 6,
-        value: FIVE_YEARS
+        value: CONSTANTS.FIVE_YEARS
     },
 ];
-/**
- * 
-    {
-        id: 7,
-        value: ALL
-    },
- */
 
 export const chartLabels = ["value"]
 
 export const defaultStockIntervals = {
-    [ONE_DAY]: ONE_MINUTE,
-    [ONE_WEEK]: FIVE_MINUTES,
-    [ONE_MONTH]: FIFTEEN_MINUTES,
-    [THREE_MONTHS]: ONE_HOUR,
-    [ONE_YEAR]: ONE_DAY,
-    [FIVE_YEARS]: ONE_WEEK,
+    [CONSTANTS.ONE_DAY]: CONSTANTS.ONE_MINUTE,
+    [CONSTANTS.ONE_WEEK]: CONSTANTS.FIVE_MINUTES,
+    [CONSTANTS.ONE_MONTH]: CONSTANTS.FIFTEEN_MINUTES,
+    [CONSTANTS.THREE_MONTHS]: CONSTANTS.ONE_HOUR,
+    [CONSTANTS.ONE_YEAR]: CONSTANTS.ONE_DAY,
+    [CONSTANTS.FIVE_YEARS]: CONSTANTS.ONE_WEEK,
 }
-// [ALL]: ONE_MONTH
 
 export const defaultAPIData = {
-    [ONE_DAY]: {},
-    [ONE_WEEK]: {},
-    [ONE_MONTH]: {},
-    [THREE_MONTHS]: {},
-    [ONE_YEAR]: {},
-    [FIVE_YEARS]: {},
+    [CONSTANTS.ONE_DAY]: {},
+    [CONSTANTS.ONE_WEEK]: {},
+    [CONSTANTS.ONE_MONTH]: {},
+    [CONSTANTS.THREE_MONTHS]: {},
+    [CONSTANTS.ONE_YEAR]: {},
+    [CONSTANTS.FIVE_YEARS]: {},
+}
+
+export const defaultSMA = {
+    [CONSTANTS.ONE_DAY]: {"sma12": -1, "sma24": -1},
+    [CONSTANTS.ONE_WEEK]: {"sma12": -1, "sma24": -1},
+    [CONSTANTS.ONE_MONTH]: {"sma12": -1, "sma24": -1},
+    [CONSTANTS.THREE_MONTHS]: {"sma12": -1, "sma24": -1},
+    [CONSTANTS.ONE_YEAR]: {"sma12": -1, "sma24": -1},
+    [CONSTANTS.FIVE_YEARS]: {"sma12": -1, "sma24": -1},
 }
 
 export const defaultTestAPIData = {
@@ -410,38 +388,37 @@ export const defaultTestAPIData = {
         ]
     }
 }
-//[ALL]: []
 
 export const defaultFormValues = {
-    "ticker": DEFAULT_TICKER,
-    "interval": ONE_MINUTE,
-    "upperSell": UPPER_SELL,
-    "lowerSell": LOWER_SELL,
-    "initHolding": INIT_HOLDING,
-    "strategy": STRATEGY,
-    "lowerIndicator": EMA_LOWER_INDICATOR,
-    'upperIndicator': EMA_UPPER_INDICATOR
+    "ticker": CONSTANTS.DEFAULT_TICKER,
+    "interval": CONSTANTS.ONE_MINUTE,
+    "upperSell": CONSTANTS.UPPER_SELL,
+    "lowerSell": CONSTANTS.LOWER_SELL,
+    "initHolding": CONSTANTS.INIT_HOLDING,
+    "strategy": CONSTANTS.STRATEGY,
+    "lowerIndicator": CONSTANTS.EMA_LOWER_INDICATOR,
+    'upperIndicator': CONSTANTS.EMA_UPPER_INDICATOR
 }
 
 export const defaultDisplayed = {
-    [ONE_DAY]: {"values": [], "ema12": [], "ema24": []},
-    [ONE_WEEK]: {"values": [], "ema12": [], "ema24": []},
-    [ONE_MONTH]: {"values": [], "ema12": [], "ema24": []},
-    [THREE_MONTHS]: {"values": [], "ema12": [], "ema24": []},
-    [ONE_YEAR]: {"values": [], "ema12": [], "ema24": []},
-    [FIVE_YEARS]: {"values": [], "ema12": [], "ema24": []},
+    [CONSTANTS.ONE_DAY]: {"values": [], "ema12": [], "ema24": []},
+    [CONSTANTS.ONE_WEEK]: {"values": [], "ema12": [], "ema24": []},
+    [CONSTANTS.ONE_MONTH]: {"values": [], "ema12": [], "ema24": []},
+    [CONSTANTS.THREE_MONTHS]: {"values": [], "ema12": [], "ema24": []},
+    [CONSTANTS.ONE_YEAR]: {"values": [], "ema12": [], "ema24": []},
+    [CONSTANTS.FIVE_YEARS]: {"values": [], "ema12": [], "ema24": []},
 }
 
 export const defaultStock = {
-    "ticker": DEFAULT_TICKER,
-    "interval": ONE_MINUTE,
-    "upperSell": UPPER_SELL,
-    "lowerSell": LOWER_SELL,
-    "initHolding": INIT_HOLDING,
-    "strategy": STRATEGY,
-    "lowerIndicator": EMA_LOWER_INDICATOR,
-    "upperIndicator": EMA_UPPER_INDICATOR,
-    "period": ONE_DAY,
+    "ticker": CONSTANTS.DEFAULT_TICKER,
+    "interval": CONSTANTS.ONE_MINUTE,
+    "upperSell": CONSTANTS.UPPER_SELL,
+    "lowerSell": CONSTANTS.LOWER_SELL,
+    "initHolding": CONSTANTS.INIT_HOLDING,
+    "strategy": CONSTANTS.STRATEGY,
+    "lowerIndicator": CONSTANTS.EMA_LOWER_INDICATOR,
+    "upperIndicator": CONSTANTS.EMA_UPPER_INDICATOR,
+    "period": CONSTANTS.ONE_DAY,
 }
 
 export const colors = {
