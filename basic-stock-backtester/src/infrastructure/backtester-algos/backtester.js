@@ -73,10 +73,10 @@ export const ema = (prevEma, dataPoint, days, smoothing) => {
     // Asserting input is valid and setting default values for parameters
     // ------------------------
     if (smoothing === undefined) { smoothing = 2 }
-    if (typeof prevEma !== "number" || isNaN(prevEma)) { throw new Error("Entered Previous Ema is not a number. Enter a valid number to compute ema.") }
-    if (typeof dataPoint !== "number" || isNaN(dataPoint)) { throw new Error("Entered Data Point for ema function is not a number. Enter a valid number to compute ema.") }
-    if (typeof days !== "number" || isNaN(days)) { throw new Error("Entered days for ema function is not a number. Enter a valid number to compute ema.") }
-    if (typeof smoothing !== "number" || isNaN(smoothing)) { throw new Error("Entered smoothing for ema function is not a number. Enter a valid number to compute ema.") }
+    if (typeof prevEma !== "number" || isNaN(prevEma)) throw new Error("Entered Previous Ema is not a number. Enter a valid number to compute ema.")
+    if (typeof dataPoint !== "number" || isNaN(dataPoint)) throw new Error("Entered Data Point for ema function is not a number. Enter a valid number to compute ema.")
+    if (typeof days !== "number" || isNaN(days)) throw new Error("Entered days for ema function is not a number. Enter a valid number to compute ema.")
+    if (typeof smoothing !== "number" || isNaN(smoothing)) throw new Error("Entered smoothing for ema function is not a number. Enter a valid number to compute ema.")
 
     // Variables defined
     // ------------------------
@@ -97,16 +97,15 @@ export const conservativeMomentumBacktesterFunction = (dataSet, initSMA24, initS
     const properDataSetKeys = new Set(["ticker", "date", "value"]);
     const everyDictsKeys = dataSet.map(dict => Object.keys(dict));
 
-    if (!everyDictsKeys.every((arr) => areSetsEqual(properDataSetKeys, new Set(arr)))) { throw new Error(`dataSet entered to backtester is bad`) }
-    if (typeof initSMA24 !== "number" || typeof initSMA12 !== "number" || isNaN(initSMA24) || isNaN(initSMA12)) { 
-        console.error(initSMA12)
-        throw new Error(`initialSMA entered to backtester is bad: initSMA12: ${initSMA12} initSMA24: ${initSMA24}`) 
-    }
-    if (typeof initiallyHolding !== "boolean") { throw new Error(`initiallyHolding entered to backtester is bad: ${initiallyHolding}`) }
-    if (typeof upperSell !== "number" || typeof lowerSell !== "number" || isNaN(upperSell) || isNaN(lowerSell)) { throw new Error(`upper/lower sell entered to backtester is bad: upperSell: ${upperSell} , lowerSell: ${lowerSell}`) }
+    if (!everyDictsKeys.every((arr) => areSetsEqual(properDataSetKeys, new Set(arr)))) throw new Error(`dataSet entered to backtester is bad`)
+    if (typeof initSMA24 !== "number" || typeof initSMA12 !== "number" || isNaN(initSMA24) || isNaN(initSMA12)) throw new Error(`initialSMA entered to backtester is bad: initSMA12: ${initSMA12} initSMA24: ${initSMA24}`)
+    if (typeof initiallyHolding !== "boolean") throw new Error(`initiallyHolding entered to backtester is bad: ${initiallyHolding}`)
+    if (typeof upperSell !== "number" || typeof lowerSell !== "number" || isNaN(upperSell) || isNaN(lowerSell)) throw new Error(`upper/lower sell entered to backtester is bad: upperSell: ${upperSell} , lowerSell: ${lowerSell}`)
 
     // Variables defined
     // ------------------------
+    initSMA12 = initSMA12 < 0 ? dataSet[0]["value"] : initSMA12 // if input is negative, then set it to first dataset value, otherwise set it to what was passed in
+    initSMA24 = initSMA24 < 0 ? dataSet[0]["value"] : initSMA24 // if input is negative, then set it to first dataset value, otherwise set it to what was passed in
     const BUY = "BUY"
     const SELL = "SELL"
     const HOLD = "HOLD"
@@ -116,7 +115,6 @@ export const conservativeMomentumBacktesterFunction = (dataSet, initSMA24, initS
     const HH = "HOLD and HOLD"
     const value = "value"
     let nextPositionEvaluation = HOLD
-    let positionEvaluation = HOLD
     let positionTwoStepEvaluation = HH
     let store = []
     let buyPoint = dataSet[1][value]
@@ -137,7 +135,6 @@ export const conservativeMomentumBacktesterFunction = (dataSet, initSMA24, initS
         // calculate indicators using provided indicator function
         let EMA24_2 = ema(EMA24_1, value1, 24)  // omitted smoothing, as the function handles it itself
         let EMA12_2 = ema(EMA12_1, value1, 12)
-
 
         // compose evaluation DTO using indicators
         const evalDTO = {
@@ -169,7 +166,7 @@ export const conservativeMomentumBacktesterFunction = (dataSet, initSMA24, initS
             sellPoint = value2
             profitabilityMultiplier *= (sellPoint / buyPoint)
             holding = false
-        } 
+        }
 
         const evalDTONext = {
             "value_1": value3,
@@ -187,7 +184,7 @@ export const conservativeMomentumBacktesterFunction = (dataSet, initSMA24, initS
 
         if (positionEvaluation === BUY) { positionTwoStepEvaluation = BH }
         else if (positionEvaluation == SELL && nextPositionEvaluation == HOLD) { positionTwoStepEvaluation = SH }
-        else if (positionEvaluation == SELL && nextPositionEvaluation == BUY)  { positionTwoStepEvaluation = SB }
+        else if (positionEvaluation == SELL && nextPositionEvaluation == BUY) { positionTwoStepEvaluation = SB }
         else { positionTwoStepEvaluation = HH }
 
         // update the store
@@ -203,6 +200,5 @@ export const conservativeMomentumBacktesterFunction = (dataSet, initSMA24, initS
             "position_two_step_evaluation": positionTwoStepEvaluation
         })
     }
-
-return store;
+    return store;
 }
