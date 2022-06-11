@@ -40,12 +40,12 @@ export const getDefaultChartData = ({ individualStock = defaultStock, retries = 
 export const toBacktesterInput = (APIData) => {
     // Input Validation
     // ------------------
-    if (APIData === undefined) throw new Error(`All API Data is missing inside of toBacktesterInput function. Ensure API Data passed in is correct.`)
-    if (APIData?.chart === undefined) throw new Error(`Chart is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct. ${Object.values(APIData)}`)
-    if (APIData.chart?.result === undefined) throw new Error("Results are missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
-    if (APIData.chart.result[0]?.meta === undefined) throw new Error("Meta Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
-    if (APIData.chart.result[0]?.timestamp === undefined) throw new Error("Timestamp Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
-    if (APIData.chart.result[0]?.indicators === undefined) throw new Error("Stock Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
+    if (APIData == null) throw new Error(`All API Data is missing inside of toBacktesterInput function. Ensure API Data passed in is correct.`)
+    if (APIData?.chart == null) throw new Error(`Chart is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct. ${Object.values(APIData)}`)
+    if (APIData.chart.result == null) throw new Error("Results are missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
+    if (APIData.chart?.result[0]?.meta == null) throw new Error("Meta Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
+    if (APIData.chart?.result[0]?.timestamp == null) throw new Error("Timestamp Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
+    if (APIData.chart?.result[0]?.indicators == null) throw new Error("Stock Data is missing from input APIData inside of the toBacktesterInput function. Make sure your API data is correct.")
 
     // Variables
     // ------------------

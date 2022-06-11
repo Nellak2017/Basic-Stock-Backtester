@@ -170,9 +170,9 @@ export const defaultTestAPIData = {
         "result": [
             {
                 "meta": {
-                    "symbol": "TSLA",
-                    "dataGranularity": "1d",
-                    "range": "1y"
+                    "symbol": CONSTANTS.DEFAULT_TICKER,
+                    "dataGranularity": CONSTANTS.ONE_DAY,
+                    "range": CONSTANTS.ONE_YEAR
                 },
                 "timestamp": {
                     0: 1622035800,
